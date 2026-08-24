@@ -13,7 +13,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
-Feature: Provide automatic cardiac phase determination reconstruction options by acquisition type
+Feature: Console-SRS.22783
     As a CT technologist
     I want the available automatic cardiac phase determination reconstruction options to match the acquisition type
     So that I can select only reconstruction options supported by the acquisition

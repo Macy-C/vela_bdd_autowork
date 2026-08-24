@@ -124,6 +124,7 @@ def when_user_selects_option_and_starts_reconstruction(context):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input', '00000093')
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
 
     patientD.input_text('$Series_No_input', '201')

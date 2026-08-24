@@ -12,7 +12,7 @@
 # Version: V1
 
 @SKIP @notfinsh
-Feature: Provide Precise Phase reconstruction when phase tolerance meets the Step & Shoot threshold
+Feature: Console-SRS.22790
     As a CT technologist
     I want Precise Phase reconstruction to be available when phase tolerance meets its supported threshold
     So that automatic cardiac phase determination can be used for eligible Step & Shoot acquisitions

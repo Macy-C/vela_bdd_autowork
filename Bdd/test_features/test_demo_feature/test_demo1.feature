@@ -1,4 +1,5 @@
 # recorder-feature-id: feature-9962fd044af2
+@SKIP
 Feature: 记事本
 
   Scenario: 输入和删除

@@ -13,7 +13,7 @@
 # Version: V1
 
 @gantry
-Feature: Provide automatic cardiac phase determination reconstruction for supported scan types
+Feature: Console-SRS.22788
     As a CT technologist
     I want automatic cardiac phase determination reconstruction to be available for supported scan types
     So that I can use the option for eligible cardiac reconstructions

@@ -12,7 +12,7 @@
 # Version: V1
 
 
-Feature: Protect automatic cardiac phase determination reconstruction with a license key
+Feature: Console-SRS.22787
     As a system administrator
     I want automatic cardiac phase determination reconstruction to be controlled by its applicable license
     So that only licensed systems can use the functionality
@@ -54,7 +54,7 @@ Feature: Protect automatic cardiac phase determination reconstruction with a lic
     Rule: A supported Precise Phase license enables scan and reconstruction workflows
     # 受支持的 Precise Phase 许可证启用扫描和重建工作流。
 
-    @license_with_absolute_delay
+    @license_with_absolute_delay @gantry
     Scenario: Scan is supported when a supported Precise Phase license key is used
         Given a supported Precise Phase license key is used
         Given a supported cardiac acquisition is configured
@@ -69,7 +69,7 @@ Feature: Protect automatic cardiac phase determination reconstruction with a lic
     #     Then 控制台成功开始扫描
     # ------------------------------------------------------
 
-    @license_with_absolute_delay
+    @license_with_absolute_delay @gantry
     Scenario: Reconstruction is supported when a supported Precise Phase license key is used
         Given a supported Precise Phase license key is used
         Given a completed supported cardiac acquisition is available for reconstruction

@@ -11,7 +11,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
-Feature: Prevent automatic cardiac phase determination reconstruction when Longer Cycle Time is enabled
+Feature: Console-SRS.22789
     As a CT technologist
     I want automatic cardiac phase determination reconstruction to be unavailable when Full Coverage, Longer Cycle Time is enabled
     So that incompatible reconstruction options cannot be used

@@ -5,6 +5,12 @@ Patient_Directory_window:
   title_re: "Patient Directory"
   auto_id: "PatientDirectoryForm"
 
+refresh_Button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Button[@auto_id='refreshButton']
+
+
 Review_button:
   root: Patient_Directory_window
   by: xpath

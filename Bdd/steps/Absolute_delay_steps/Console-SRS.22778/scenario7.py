@@ -84,6 +84,7 @@ def given_reconstructed_image_data_is_prepared(context):
 def given_reconstructed_image_is_generated_with_option(context, cardiac_phase_mode):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
 
     patientD.input_text('$Series_No_input', '201')
@@ -111,6 +112,7 @@ def when_quick_review_screen_is_opened(context):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input', '00000094')
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
     patientD.input_text('$Series_No_input', '203')
     patientD.click('$Series_first_result')

@@ -1,9 +1,0 @@
-notepad_window_02450485:
-  top_level: true
-  backend: uia
-  control_type: Window
-  class_name: Notepad
-文本编辑器_by_name:
-  control_type: Document
-  name: 文本编辑器
-  root: notepad_window_02450485

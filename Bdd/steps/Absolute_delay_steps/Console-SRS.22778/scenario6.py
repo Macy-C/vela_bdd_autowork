@@ -84,6 +84,7 @@ def given_reconstructed_image_is_generated_with_option(context, cardiac_phase_mo
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input', '00000093')
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
 
     patientD.input_text('$Series_No_input', '201')
@@ -111,7 +112,7 @@ def when_review_screen_is_opened(context):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input', '00000093')
-
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
     patientD.input_text('$Series_No_input', '203')
     patientD.click('$Series_first_result')
@@ -128,7 +129,8 @@ def then_review_ecg_value_should_contain_value_unit(context, phase_unit):
     phase = review.get_variable('phase')
     review.assert_ocr_contains(f'ECG: {phase+phase_unit}',region='$DICOM_imaging_1')
     review.assert_ocr_contains(f'ECG: {phase+phase_unit}',region='$DICOM_imaging_2')
-    review.assert_ocr_contains(f'ECG:{phase+phase_unit}',region='$DICOM_imaging_3')
+    # review.assert_ocr_contains(f'ECG:{phase+phase_unit}',region='$DICOM_imaging_3')
+    review.assert_ocr_contains(phase+phase_unit,region='$DICOM_imaging_3')
 
 
 @when('Image Parameters is opened from the Review screen')

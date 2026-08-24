@@ -95,6 +95,7 @@ def given_reconstruction_result_is_edited_in_surview(context):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input','00000064')
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
 
     patientD.input_text('$Series_No_input', '201')

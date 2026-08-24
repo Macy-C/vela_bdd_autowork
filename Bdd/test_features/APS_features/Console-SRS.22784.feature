@@ -13,7 +13,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
-Feature: Indicate automatic cardiac phase determination usage in reconstructed image information
+Feature: Console-SRS.22784
     As a CT technologist
     I want reconstructed images to identify the automatic cardiac phase determination option that was used
     So that I can trace how each image was reconstructed from both stored and visible image information
@@ -34,9 +34,9 @@ Feature: Indicate automatic cardiac phase determination usage in reconstructed i
         And the image paramenters fields accurately identify "<reconstruction_option>" as the automatic cardiac phase determination option used
     Examples:
             | acquisition_type | reconstruction_option   |
-    #        | Helical          | Precise Phase           |
-    #        | Helical          | Precise Phase Systolic  |
-    #        | Helical          | Precise Phase Diastolic |
+            | Helical          | Precise Phase           |
+            | Helical          | Precise Phase Systolic  |
+            | Helical          | Precise Phase Diastolic |
             | Step & Shoot     | Precise Phase           |
 
     # ------------------------------------------------------

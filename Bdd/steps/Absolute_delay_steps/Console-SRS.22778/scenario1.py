@@ -127,6 +127,7 @@ def when_final_reconstruction_is_started(context,recon_phase_value):
     patientD = get_page(context, PatientDirectory)
     patientD.input_text('$Patient_ID_input', patientD.get_variable('patient_id'))
     # patientD.input_text('$Patient_ID_input','00000048')
+    patientD.click('$refresh_Button')
     patientD.click('$studies_first_result')
 
     patientD.input_text('$Series_No_input', '201')
