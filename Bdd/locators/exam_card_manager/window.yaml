@@ -1,0 +1,6 @@
+mainform_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title: Exam Card Manager
+  auto_id: MainForm

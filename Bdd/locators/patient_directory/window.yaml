@@ -1,0 +1,70 @@
+Patient_Directory_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title_re: "Patient Directory"
+  auto_id: "PatientDirectoryForm"
+
+Review_button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Pane[@auto_id='pmsReviewCombo']
+
+quick_review_button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Button[@auto_id='reviewButton']
+
+
+recon_button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Button[@auto_id='reconButton']
+
+
+Preferences_button:
+  root: Patient_Directory_window
+  control_type: Button
+  auto_id: prefsButton
+
+
+Patient_ID_input:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@name='Patient ID'][0]
+
+studies_first_result:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@name='Patient ID'][1]
+
+Series_No_input:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@name='Series No.'][0]
+
+Series_first_result:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@name='Series No.'][1]
+
+View_Dicom_Info_button:
+  region: Patient_Directory_window
+  by: ocr
+  value: "View Dicom Info"
+
+Dicom_Info_Find_Next_button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Button[@auto_id='btn_FindNext']
+
+Dicom_Info_Find_input:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Edit[@auto_id='txt_SearchStr']
+
+Dicom_Info_horizontal_scrollbar:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Edit[@auto_id='richTextBox1']//ScrollBar[-1]/Thumb
+

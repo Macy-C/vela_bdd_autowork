@@ -1,0 +1,14 @@
+scan_type_combo:
+  root: mainform_window
+  by: xpath
+  value: "//Text[@name='Scan Type:']/next::ComboBox[0]"
+
+parameters_scroll:
+  root: mainform_window
+  by: xpath
+  value: //Thumb
+
+absolute_by_name:
+  root: mainform_window
+  control_type: Text
+  name: Absolute

@@ -1,0 +1,11 @@
+switch_screen_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: BrSwitchScreenForm
+
+toggle_screen_button:
+  root: switch_screen_window
+  control_type: Button
+  auto_id: BrSwitchScreenBtn
+  title: Switch Screen

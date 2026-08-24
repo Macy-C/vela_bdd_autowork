@@ -1,0 +1,31 @@
+Log_Viewer_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: "MainForm"
+  title: "Log Viewer"
+
+existing_log_view1_maximize_button:
+  root: Log_Viewer_window
+  by: xpath
+  value: //Button[@name='Maximize'][0]
+
+ModuleName_edit_box:
+  root: Log_Viewer_window
+  control_type: DataItem
+  title: 'ModuleName'
+
+TextMessage_edit_box:
+  root: Log_Viewer_window
+  by: xpath
+  value: "//DataItem[@name='TextMessage'][0]"
+
+last_TextMessage_edit_box:
+  root: Log_Viewer_window
+  by: xpath
+  value: "//Group[@name='Data Panel']//Custom[-1]/DataItem[@name='TextMessage']"
+
+Message_Text_res_box:
+  root: Log_Viewer_window
+  by: xpath
+  value: //DataItem[@name='TextMessage'][-1]

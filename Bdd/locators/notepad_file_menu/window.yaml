@@ -1,0 +1,10 @@
+new_tab:
+  control_type: Text
+  auto_id: TextBlock
+  name: 新建标签页
+  root: notepad_file_menu_window
+notepad_file_menu_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  class_name: Microsoft.UI.Content.PopupWindowSiteBridge

@@ -1,0 +1,24 @@
+Series_Description_input:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@title='Series Description']/next::Edit[0]
+
+Gating_input:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@title='Gating']/next::Edit[0]
+
+Tagging_input:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@title='Tagging']/next::Edit[0]
+
+ok_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='btnOk']
+
+
+
+
+

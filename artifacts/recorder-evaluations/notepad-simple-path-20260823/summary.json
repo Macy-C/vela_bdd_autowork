@@ -1,0 +1,99 @@
+{
+  "simple_path_evaluation_version": "1.0",
+  "status": "failed",
+  "request_id": "request_step_5c5959_76275098_49859786bc66",
+  "plan_id": "plan-5753d45085b50e20",
+  "transaction_id": "transaction-20260823-014509-241534-202a9670",
+  "dimensions": {
+    "correctness": {
+      "status": "passed",
+      "checks": {
+        "protocol_e2e_passed": true,
+        "external_ai_plan_validated": true,
+        "canonical_semantics_are_separated": true,
+        "feature_authority_needs_no_repeat_question": true
+      },
+      "errors": []
+    },
+    "user_cost": {
+      "status": "passed",
+      "checks": {
+        "one_business_request": true,
+        "one_plan": true,
+        "one_transaction": true,
+        "zero_blocking_questions": true
+      },
+      "errors": []
+    },
+    "maintainability": {
+      "status": "passed",
+      "checks": {
+        "stable_public_names": true,
+        "bounded_changed_files": true,
+        "reuse_decisions_explicit": true
+      },
+      "errors": []
+    },
+    "safety": {
+      "status": "passed",
+      "checks": {
+        "transaction_completed": true,
+        "business_files_only": true,
+        "execution_is_explicit": true,
+        "current_contract_lease_bound": true
+      },
+      "errors": []
+    },
+    "execution": {
+      "status": "passed",
+      "checks": {
+        "runtime_policy_respected": true,
+        "independent_business_oracle": true
+      },
+      "errors": []
+    },
+    "efficiency": {
+      "status": "failed",
+      "checks": {
+        "default_context_within_target": true,
+        "transaction_within_target": false,
+        "end_to_end_within_target": false
+      },
+      "errors": []
+    }
+  },
+  "failed_dimensions": [
+    "efficiency"
+  ],
+  "metrics": {
+    "measurement_basis": "local content-addressed Recorder artifacts; not a signed user-interaction or model-invocation receipt",
+    "request_count": 1,
+    "plan_count": 1,
+    "transaction_count": 1,
+    "blocking_question_count": 0,
+    "default_context_bytes": 46299,
+    "transaction_seconds": 189.0,
+    "end_to_end_seconds": 516.0,
+    "changed_file_count": 4,
+    "changed_files": [
+      "Bdd/locators/notepad/window.yaml",
+      "Bdd/page_obj/notepad/__init__.py",
+      "Bdd/page_obj/notepad/page.py",
+      "Bdd/steps/test_demo1_step.py"
+    ],
+    "model_invocation_count": {
+      "status": "not_measured",
+      "reason": "No signed model invocation receipt is available."
+    },
+    "unrelated_process_count": {
+      "status": "not_measured",
+      "reason": "Execution Profile constrains ownership, but no trusted whole-host process inventory receipt exists."
+    }
+  },
+  "targets": {
+    "max_default_context_bytes": 51200,
+    "max_transaction_seconds": 180.0,
+    "max_end_to_end_seconds": 300.0,
+    "max_changed_files": 6
+  }
+}

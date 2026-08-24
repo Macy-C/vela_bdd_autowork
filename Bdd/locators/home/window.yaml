@@ -1,0 +1,16 @@
+home_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: "HomeForm"
+  title: "Home"
+
+Log_Viewer_button:
+  root: home_window
+  control_type: Button
+  title: 'Log Viewer'
+
+exam_card_manager_entry:
+  root: home_window
+  control_type: Text
+  title: Exam Card Manager

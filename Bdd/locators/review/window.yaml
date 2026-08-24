@@ -1,0 +1,26 @@
+SpectralViewer_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title: "SpectralViewer"
+  auto_id: "SpectralViewer"
+
+Image_info_Button:
+  root: SpectralViewer_window
+  by: xpath
+  value: //Pane[@auto_id='infoImageToolButton']
+
+DICOM_imaging_1:
+  root: SpectralViewer_window
+  by: xpath
+  value: //Pane[@auto_id='pmsClientArea']/Pane[0]
+
+DICOM_imaging_2:
+  root: SpectralViewer_window
+  by: xpath
+  value: //Pane[@auto_id='pmsClientArea']/Pane[1]
+
+DICOM_imaging_3:
+  root: SpectralViewer_window
+  by: xpath
+  value: //Pane[@auto_id='pmsClientArea']/Pane[2]

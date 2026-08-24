@@ -1,0 +1,26 @@
+{
+  "oracle_registry_version": "1.1",
+  "oracles": {
+    "notepad_editor_text_is_12": {
+      "version": "1.0",
+      "outcome": "business_passed",
+      "adapter": "uia_property_equals",
+      "evidence_type": "uia_value_snapshot",
+      "backend": "uia",
+      "window": {
+        "class_name": "Notepad"
+      },
+      "control": {
+        "control_type": "Document"
+      },
+      "property": "value",
+      "expected": "12",
+      "process": {
+        "executable_sha256": "7146785db2b9c4fbdc114b4f31cf4d3c01168661f06ac6149709bc651529c934",
+        "command_line_contains": [
+          "Notepad.exe"
+        ]
+      }
+    }
+  }
+}

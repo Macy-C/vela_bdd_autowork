@@ -1,0 +1,16 @@
+quick_review_imaging:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Pane[@auto_id='pmsClientArea']
+
+Image_info_Button:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Pane[@auto_id='infoImageToolButton']
+
+#Image_info_page_yaml----------------------
+Series_Description_input:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Text[@title='Series Description']/next::Edit[0]
+

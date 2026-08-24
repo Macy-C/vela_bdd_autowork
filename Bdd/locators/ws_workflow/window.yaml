@@ -1,0 +1,47 @@
+WsWorkflow_window:
+  backend: uia
+  control_type: Window
+  auto_id: WorkflowUIBaseForm
+  title: WsWorkflowUIForm
+
+Directory_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: directoryWfButton
+  title: Directory
+
+Review_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: reviewWfButton
+  title: Review
+
+Analysis_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: analysisWfButton
+  title: Analysis
+
+AI_Viewer_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: AIViewerWfButton
+  title: AI_Viewer_button
+
+Film_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: filmWfButton
+  title: Film
+
+Report_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: reportWfButton
+  title: Report
+
+View2_button:
+  root: WsWorkflow_window
+  control_type: Button
+  auto_id: view2WfButton
+  title: View2

@@ -1,0 +1,173 @@
+all_parameters_window:
+  root: ExamApplication_window   #window.yaml.yaml
+  control_type: Custom
+  auto_id: "allParametersTab"
+
+All_parameters_tag:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='All Parameters']
+
+relative_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Relative']
+
+absolute_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Absolute']
+
+default_relative_pic:
+  by: pic
+  file: "plan/default_relative.png"
+  region: all_parameters_window
+
+scroll_bar:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Thumb[0]
+
+
+relative_Phase_edit_box:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][0]/next::ComboBox[0]/Edit
+
+absolute_Phase_edit_box:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][1]/next::ComboBox[0]/Edit
+
+relative_Phase_tolerance_edit_box:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][0]/next::ComboBox[0]/Edit
+
+absolute_Phase_tolerance_edit_box:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][1]/next::ComboBox[0]/Edit
+
+
+
+
+relative_Phase_unit_ocr:
+  by: ocr
+  value: '%'
+  index: 0
+  region: all_parameters_window
+
+relative_Phase_tolerance_unit_ocr:
+  by: ocr
+  value: '%'
+  region: all_parameters_window
+
+absolute_Phase_unit_ocr:
+  by: ocr
+  value: 'ms'
+  index: 0
+  region: all_parameters_window
+
+absolute_Phase_tolerance_unit_ocr:
+  by: ocr
+  value: 'ms'
+  region: all_parameters_window
+
+
+
+relative_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][0]/next::ComboBox[0]//ListItem
+
+absolute_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][1]/next::ComboBox[0]//ListItem
+
+relative_phase_tolerance_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][0]/next::ComboBox[0]//ListItem
+
+absolute_phase_tolerance_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][1]/next::ComboBox[0]//ListItem
+
+relative_phase_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][0]/next::Text[0]
+
+relative_phase_tolerance_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][0]/next::Text[0]
+
+absolute_phase_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][1]/next::Text[0]
+
+absolute_phase_tolerance_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase Tolerance:'][1]/next::Text[0]
+
+ecg_relative_phase_ComboBox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='%'][0]/prev::ComboBox[0]
+
+ecg_absolute_phase_ComboBox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='ms'][0]/prev::ComboBox[0]
+
+ecg_relative_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][0]/next::ComboBox[0]//ListItem
+
+ecg_absolute_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][1]/next::ComboBox[0]//ListItem
+
+ecg_relative_phase_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][0]/next::*[1]
+
+ecg_absolute_phase_unit:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='allParametersTab']//Text[@name='Phase:'][1]/next::*[1]
+
+range_prompt_msg:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[contains(@name,'Current selectable phase range is')]
+
+
+4_1_phase_combobox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Phase:'][0]/next::ComboBox[0]
+
+4_1_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Phase:'][0]/next::ComboBox[0]//ListItem
+
+Full_coverage_longer_cycle_time_option:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Full coverage, longer cycle time']
+
+Proceed_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='Proceed']

@@ -1,0 +1,10 @@
+image_control:
+  root: ExamApplication_window
+  by: xpath
+  value: //Image[@auto_id='imageControl']
+
+result_first_header:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@auto_id='ItemHeader'][0]
+

@@ -1,0 +1,77 @@
+ExamApplication_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title: "ExamApplicationForm"
+  auto_id: "ExamApplicationForm"
+
+# MessageBox_window -+++++++++++++++++++++++++
+MessageBox_window:
+  root: ExamApplication_window
+  by: xpath
+  value: "//Window[@auto_id='PmsMessageBox']"
+
+MessageBox_OK_button:
+  root: ExamApplication_window
+  by: xpath
+  value: "//Window[@auto_id='PmsMessageBox']/Button[@name='OK']"
+# MessageBox_window -----------------------------
+
+
+Locator_locator_2:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Locator, locator']
+
+Locator_locator_2_delete:
+  root: ExamApplication_window
+  by: xpath
+  value: //MenuItem[@name='Delete']
+
+
+
+step_and_shoot_Ax:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='SeriesPanelController']//Text[@name='Step&Shoot, Ax']
+
+step_and_shoot_4_1:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='SeriesPanelController']//Text[@name='4.1']
+
+step_and_shoot_4_1_series_name:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='SeriesPanelController']//Text[@name='4.1']/next::Text[0]
+
+show_all_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Custom[@auto_id='ParametersPanel']//Text[@name='Show All...']
+
+
+go_scan_button:
+  root: ExamApplication_window
+  control_type: Button
+  auto_id: "goButton"
+  name: "Go"
+
+Cancel_scan_button:
+  root: ExamApplication_window
+  control_type: Button
+  auto_id: "CancelButton"
+
+start_scan_button:
+  root: ExamApplication_window
+  control_type: Button
+  auto_id: "buttonTrigger"
+
+legacy_scan_transition_position:
+  by: pos
+  coords: [650, 200, 1920, 1080]
+
+Dose_Notification_confirm_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='ConfirmButton']

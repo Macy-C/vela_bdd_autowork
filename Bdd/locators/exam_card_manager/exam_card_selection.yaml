@@ -1,0 +1,14 @@
+cardiac_group:
+  root: mainform_window
+  by: xpath
+  value: "//Text[@name='Cardiac']"
+
+step_and_shoot_exam_card:
+  root: mainform_window
+  control_type: Text
+  name: Step&Shoot
+
+ok_by_name:
+  root: mainform_window
+  control_type: Text
+  name: OK

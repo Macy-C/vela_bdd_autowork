@@ -1,0 +1,11 @@
+warning_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title: "Warning"
+  auto_id: "PmsMessageBox"
+
+warning_ok_button:
+  root: warning_window
+  by: xpath
+  value: //Button[@auto_id='OK']

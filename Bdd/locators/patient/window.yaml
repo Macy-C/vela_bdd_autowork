@@ -1,0 +1,83 @@
+Patient_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: "ExamPrepForm"
+
+Anonymous_button:
+  root: Patient_window
+  control_type: Button
+  auto_id: "AnonymousBtn"
+
+patient_id_edit:
+  root: Patient_window
+  by: xpath
+  value: "//Edit[@auto_id='controlPATIENT_ID']"
+
+
+
+radioAdult_button:
+  root: Patient_window
+  control_type: CheckBox
+  auto_id: "radioAdult"
+
+show_select_posture_button:
+  root: Patient_window
+  control_type: Button
+  auto_id: "selectionBtn"
+
+select_posture1_button:
+  by: pic
+  file: posture1.png
+  region: Patient_window
+
+show_posture_decubitus_button:
+  by: ocr
+  value: decubitus
+  region: Patient_window
+
+Reference_Exam_Cards_button:
+  root: Patient_window
+  control_type: CheckBox
+  auto_id: factoryExamCardsButton
+
+groupsListBox_window:
+  root: Patient_window
+  control_type: List
+  auto_id: groupsListBox
+
+cardiac_button:
+  by: ocr
+  value: Cardiac
+  region: groupsListBox_window
+
+Thorax_button:
+  by: ocr
+  value: Thorax
+  region: groupsListBox_window
+
+Gated_Helical_CTA_button:
+  root: Patient_window
+  by: xpath
+  value: //Text[@auto_id='examCardText'][@name='Gated Helical CTA']
+
+Step_and_Shoot_button:
+  root: Patient_window
+  control_type: Text
+  auto_id: examCardText
+  name: Step&Shoot
+
+Coronary_CTA_button:
+  root: Patient_window
+  by: xpath
+  value: //Text[@auto_id='examCardText'][@name='Coronary CTA']
+
+ok_Button:
+  root: Patient_window
+  control_type: Button
+  auto_id: okButton
+
+Exam_Application_Yes_button:
+  root: Patient_window
+  by: xpath
+  value: //Window[@auto_id='PmsMessageBox'][@name='Exam Application']/Button[@auto_id='Yes'][@name='Yes']

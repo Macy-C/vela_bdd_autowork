@@ -1,0 +1,68 @@
+ExamApplication_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  title: "ExamApplicationForm"
+  auto_id: "ExamApplicationForm"
+
+Edit_Result_Button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='EditResultButton'][0]
+
+Edit_Results_on_Surview_Button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[contains(@name,'Edit Results on Surview')]
+
+
+view2_show_all_button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Show All...']
+
+absolute_option:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Absolute']
+
+absolute_editbox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='ms'][0]/prev::ComboBox[0]/edit
+
+relative_option:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Relative']
+
+relative_editbox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='%'][0]/prev::ComboBox[0]/edit
+
+relative_combobox:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='%'][0]/prev::ComboBox[0]
+
+relative_phase_list:
+  root: ExamApplication_window
+  by: xpath
+  value: //Text[@name='Phase:'][0]/next::ComboBox[0]//ListItem
+
+
+Start_Recon_Button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='StartReconButton']
+
+image_parameters_Button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Pane[@auto_id='parametersFrameButton']
+
+Exit_Button:
+  root: ExamApplication_window
+  by: xpath
+  value: //Button[@auto_id='LogoutButton']

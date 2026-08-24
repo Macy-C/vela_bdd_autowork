@@ -1,0 +1,4 @@
+step_and_shoot_ax_sequence:
+  root: mainform_window
+  by: xpath
+  value: "//Text[@name='Step&Shoot, Ax'][0]"

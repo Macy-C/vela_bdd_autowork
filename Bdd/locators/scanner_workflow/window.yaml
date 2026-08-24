@@ -1,0 +1,22 @@
+scannerworkflowuiform_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: ScannerWorkflowUIForm
+  title: ScannerWorkflowUIForm
+
+home_button:
+  root: scannerworkflowuiform_window
+  control_type: Button
+  auto_id: homeWfButton
+
+view_button:
+  root: scannerworkflowuiform_window
+  by: xpath
+  value: //Button[@auto_id='viewWfButton']
+
+endExam_button:
+  root: scannerworkflowuiform_window
+  by: xpath
+  value: //Button[@auto_id='endExamWfButton']
+

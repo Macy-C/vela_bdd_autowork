@@ -1,0 +1,22 @@
+notepad_editor:
+  control_type: Document
+  name: 文本编辑器
+  root: notepad_window
+notepad_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  class_name: Notepad
+bold_button:
+  control_type: Button
+  name: 加粗(Ctrl+B)
+  root: notepad_window
+file_menu:
+  control_type: MenuItem
+  auto_id: File
+  name: 文件
+  root: notepad_window
+italic_button:
+  control_type: Button
+  name: 斜体(Ctrl+I)
+  root: notepad_window

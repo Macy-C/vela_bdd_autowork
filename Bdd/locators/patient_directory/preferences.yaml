@@ -1,0 +1,29 @@
+title_vertical_scroll_bar:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Tree[@auto_id='categoryTree']//Thumb[0]
+
+title_region:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Tree[@auto_id='categoryTree']
+
+licensing_button:
+  region: title_region
+  by: ocr
+  value: 'Licensing'
+
+license_list_scroll_bar:
+  root: Patient_Directory_window
+  by: xpath
+  value: //Pane[@auto_id='licensePanel']//Thumb[0]
+
+Absolute_Delay_license_type:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@Value.Value='Absolute Delay']/next::DataItem[0]
+
+Precise_Phase_license_type:
+  root: Patient_Directory_window
+  by: xpath
+  value: //DataItem[@Value.Value='Precise Phase']/next::DataItem[0]

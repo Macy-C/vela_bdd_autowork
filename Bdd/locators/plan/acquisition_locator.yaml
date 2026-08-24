@@ -1,0 +1,10 @@
+viewersPanel_window:
+  root: ExamApplication_window   #window.yaml.yaml
+  control_type: Pane
+  auto_id: "viewersPanel"
+
+start_final_recon_button:
+  by: ocr
+  value: "Start Final Recon"
+  region: viewersPanel_window
+

@@ -1,0 +1,41 @@
+{
+  "receipts": [
+    {
+      "oracle_id": "notepad_editor_text_is_12",
+      "status": "passed",
+      "generation_provenance": {
+        "provenance_version": "1.1",
+        "request_id": "request_step_5c5959_76275098_707071a66059",
+        "request_fingerprint": "719b442c8353dcefec4d3f805dff5d5ae366e3b789adb614cf22033bee49c365",
+        "evidence_fingerprint": "d31d5348b0ccb2179d92aa4b7f61cb19dcdfa1199447af2f1545401681fc87ae",
+        "revision_seal": "091f7eba42747e6852ba0fbe11ae6e29eece9ad9eda813fbced4acc1a227649b",
+        "annotation_snapshot_fingerprint": "e1ec1a111f989838df6fa76ad79644a41fa4397faee59eff3792d3b3fc59aaac",
+        "plan_id": "plan-c76538009dc91374",
+        "plan_fingerprint": "c76538009dc91374be74392bcefcfd4cc3d586d88d7c1bbeb5b8a10df1df3028",
+        "transaction_id": "transaction-20260823-130108-097333-862afdb2",
+        "completion_fingerprint": "c654172dda5507d43ed0c2985d8ad7a46eb0a81853c93c1548d7db6617b716ab",
+        "result_fingerprint": "1bdadeb0c087e933a1dc7fa157bbff9f46f156af221a46a3156786f948def912",
+        "runtime_code_snapshot_fingerprint": "6281b3e7fed1db60cf9898d739ca3c3ce3a00c6a9988c2fbabc36cf7c80b2c63",
+        "implementation_snapshot": [],
+        "runtime_risk_policy_fingerprint": "f72c7d85ad248cfecc74d17cd795e7c5c2dfdd8bb034a5afe66b6f683c2f67eb"
+      },
+      "run_result_id": "run-result-d43dc4932e82a0d0",
+      "evidence": [
+        {
+          "evidence_type": "uia_value_snapshot",
+          "path": "artifacts/run-results/oracle-evidence/notepad-final-20260823.json",
+          "sha256": "36b41d903e90511e90aa26157cc0b2ae4c7dec1d39e9a236921907a4c13fea13",
+          "size": 2562
+        }
+      ],
+      "oracle_receipt_version": "1.0",
+      "producer": "framework_oracle_runner",
+      "oracle_registry_version": "1.1",
+      "oracle_registry_fingerprint": "0a36f67c9aa4cdf551b2a5f6e8739b0bfc74ec3e04b847710a06313066b41d3c",
+      "oracle_version": "1.0",
+      "oracle_definition_fingerprint": "7f357c7c74415cf1e0cc357ff2c1ff86dc26be1edae32b9cea3a99254d1f73f5",
+      "outcome": "business_passed",
+      "fingerprint": "c989e26331105bacfbab6e4ae2563b38489b7ffd902f785a93da3376eb7d44bf"
+    }
+  ]
+}

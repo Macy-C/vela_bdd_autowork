@@ -1,0 +1,50 @@
+Simulator_window:
+  top_level: true
+  backend: uia
+  control_type: Window
+  auto_id: "UIMainPage"
+  title: "Unified System Simulator"
+
+Switch_to_Pulmo_button:
+  root: Simulator_window
+  control_type: Button
+  auto_id: switchbtn
+  title: "Switch to Pulmo"
+
+Switch_to_Cardiac_button:
+  root: Simulator_window
+  control_type: Button
+  auto_id: switchbtn
+  title: "Switch to Cardiac"
+
+ECG_On_button:
+  root: Simulator_window
+  control_type: Button
+  auto_id: btnECGOnOff
+  title: "ECG On"
+
+ECG_Off_button:
+  root: Simulator_window
+  control_type: Button
+  auto_id: btnECGOnOff
+  title: "ECG Off"
+
+Manual_scan_button:
+  by: pic
+  file: simulator/simulator_manual_btn.png
+  region: Simulator_window
+
+Auto_scan_button:
+  by: pic
+  file: simulator/simulator_auto_btn.png
+  region: Simulator_window
+
+Estop_button:
+  root: Simulator_window
+  control_type: Pane
+  auto_id: btnEstop
+
+Gantry_Switch_button:
+  root: Simulator_window
+  control_type: Pane
+  auto_id: GantrySwitch
