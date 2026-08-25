@@ -11,7 +11,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
-
+@step:APS_steps/Console-SRS.22787
 Feature: Console-SRS.22787
     As a system administrator
     I want automatic cardiac phase determination reconstruction to be controlled by its applicable license

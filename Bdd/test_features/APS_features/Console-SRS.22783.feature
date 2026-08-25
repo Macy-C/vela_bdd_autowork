@@ -13,6 +13,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
+@step:APS_steps/Console-SRS.22783
 Feature: Console-SRS.22783
     As a CT technologist
     I want the available automatic cardiac phase determination reconstruction options to match the acquisition type

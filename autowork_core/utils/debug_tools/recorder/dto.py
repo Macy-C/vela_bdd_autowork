@@ -214,7 +214,7 @@ class ScenarioScopeDTO:
     selected_count: int
     total_count: int
     label: str
-    generation_ready: bool
+    capture_generation_candidate: bool
     incomplete_step_ids: tuple[str, ...]
 
 
@@ -258,6 +258,7 @@ class DecisionQuestionDTO:
     action_ids: tuple[str, ...]
     evidence_ids: tuple[str, ...]
     media: tuple[QuestionMediaDTO, ...]
+    blocking: bool = True
 
 
 @dataclass(frozen=True)
@@ -370,6 +371,32 @@ class VerificationSummaryDTO:
 
 
 @dataclass(frozen=True)
+class GenerationJobHistoryDTO:
+    job_id: str
+    job_path: str
+    status: str
+    phase: str | None
+    reason: str | None
+    profile_id: str | None
+    retired_at: str | None
+    result_status: str | None
+    result_path: str | None
+    is_current: bool = False
+
+
+@dataclass(frozen=True)
+class FeedbackHistoryDTO:
+    memory_id: str
+    status: str
+    tier: str | None
+    claim: str
+    created_at: str | None
+    transaction_id: str | None
+    supersedes: tuple[str, ...]
+    is_effective: bool
+
+
+@dataclass(frozen=True)
 class GenerationSummaryDTO:
     workflow_status: str
     display_status: str
@@ -391,6 +418,11 @@ class GenerationSummaryDTO:
     recommended_detail: str = "证据与生成状态正在更新。"
     brief_size_bytes: int = 0
     verification: VerificationSummaryDTO | None = None
+    job_id: str | None = None
+    job_phase: str | None = None
+    generation_profile_id: str | None = None
+    job_history: tuple[GenerationJobHistoryDTO, ...] = ()
+    feedback_history: tuple[FeedbackHistoryDTO, ...] = ()
 
 
 @dataclass(frozen=True)

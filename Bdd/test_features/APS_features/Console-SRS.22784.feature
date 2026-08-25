@@ -13,6 +13,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
+@step:APS_steps/Console-SRS.22784
 Feature: Console-SRS.22784
     As a CT technologist
     I want reconstructed images to identify the automatic cardiac phase determination option that was used

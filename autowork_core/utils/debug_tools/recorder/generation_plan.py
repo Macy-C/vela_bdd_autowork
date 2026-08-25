@@ -388,6 +388,11 @@ def load_generation_plan(session_dir, state, request):
                 "lease_fingerprint"
             )
         ),
+        generation_job_lease_fingerprint=(
+            (source.get("generation_job_lease") or {}).get(
+                "lease_fingerprint"
+            )
+        ),
     )
     decision = (state or {}).get("decision") or {}
     decision_status = decision.get("status")
@@ -413,6 +418,15 @@ def load_generation_plan(session_dir, state, request):
         source.get("decision_answer_fingerprint")
         != expected_answer_fingerprint,
         not _generation_intent_identity_is_valid(artifact),
+                bool(source.get("generation_job_lease"))
+                and not _generation_job_lease_is_valid(
+                    source.get("generation_job_lease")
+                ),
+                bool(source.get("generation_job_lease"))
+                and not _generation_job_lease_matches_state(
+                    source.get("generation_job_lease"),
+                    state,
+                ),
         (
             source.get("intent_fingerprint")
             != pointer.get("intent_fingerprint")
@@ -499,6 +513,11 @@ def plan_pointer(session_dir, artifact, path=None):
         "generation_contract_lease_fingerprint": (
             ((artifact.get("source") or {}).get(
                 "generation_contract_lease"
+            ) or {}).get("lease_fingerprint")
+        ),
+        "generation_job_lease_fingerprint": (
+            ((artifact.get("source") or {}).get(
+                "generation_job_lease"
             ) or {}).get("lease_fingerprint")
         ),
     }
@@ -4091,6 +4110,11 @@ def plan_artifact_identity_is_valid(artifact):
                 "lease_fingerprint"
             )
         ),
+        generation_job_lease_fingerprint=(
+            (source.get("generation_job_lease") or {}).get(
+                "lease_fingerprint"
+            )
+        ),
     )
     return all((
         _plan_origin_is_valid(
@@ -4099,6 +4123,12 @@ def plan_artifact_identity_is_valid(artifact):
             source.get("plan_origin"),
         ),
         _generation_intent_identity_is_valid(artifact),
+                (
+                    not source.get("generation_job_lease")
+                    or _generation_job_lease_is_valid(
+                        source.get("generation_job_lease")
+                    )
+                ),
         (
             version not in CONTRACT_LEASE_PLAN_VERSIONS
             or _generation_contract_lease_is_valid(
@@ -4141,6 +4171,7 @@ def persist_generation_plan(
         plan_origin,
         note,
         generation_contract_lease,
+    generation_job_lease=None,
 ):
     revision_seal = (state.get("revision") or {}).get("seal")
     decision_answer_fingerprint = (
@@ -4174,6 +4205,9 @@ def persist_generation_plan(
         generation_contract_lease_fingerprint=(
             generation_contract_lease or {}
         ).get("lease_fingerprint"),
+        generation_job_lease_fingerprint=(
+            generation_job_lease or {}
+        ).get("lease_fingerprint"),
     )
     plan_id = f"plan-{fingerprint[:16]}"
     output = (
@@ -4201,6 +4235,7 @@ def persist_generation_plan(
             "decision_answer_fingerprint": decision_answer_fingerprint,
             "intent_fingerprint": intent_fingerprint,
             "generation_contract_lease": generation_contract_lease,
+            "generation_job_lease": generation_job_lease,
         },
         "intent": {
             "intent_version": "1.0",
@@ -4369,6 +4404,7 @@ def _plan_fingerprint(
         plan_origin=None,
         intent_fingerprint=None,
         generation_contract_lease_fingerprint=None,
+        generation_job_lease_fingerprint=None,
     ):
     value = {
         "request_id": request_id,
@@ -4391,7 +4427,31 @@ def _plan_fingerprint(
         value["generation_contract_lease_fingerprint"] = (
             generation_contract_lease_fingerprint
         )
+    if generation_job_lease_fingerprint:
+        value["generation_job_lease_fingerprint"] = (
+            generation_job_lease_fingerprint
+        )
     return _stable_hash(value)
+
+
+def _generation_job_lease_is_valid(value):
+    from autowork_core.utils.debug_tools.recorder.generation_job import (
+        generation_job_lease_is_valid,
+    )
+
+    return generation_job_lease_is_valid(value)
+
+
+def _generation_job_lease_matches_state(lease, state):
+    pointer = (state or {}).get("current_job") or {}
+    return bool(
+        lease.get("job_id") == pointer.get("job_id")
+        and lease.get("job_fingerprint") == pointer.get("job_fingerprint")
+        and lease.get("job_nonce") == pointer.get("nonce")
+        and lease.get("request_id") == (state or {}).get("request_id")
+        and lease.get("profile_fingerprint")
+        == pointer.get("profile_lease_fingerprint")
+    )
 
 
 def _plan_origin_is_valid(version, confirmation_source, plan_origin):

@@ -39,6 +39,7 @@ python -m Bdd.local_runner Bdd/test_features/test_debug.feature
 | [docs/3.动作参考.md](docs/3.动作参考.md) | BasePage 动作签名、等待和断言 |
 | [docs/4.定位器与配置.md](docs/4.定位器与配置.md) | locator、data、Root 和运行配置 |
 | [docs/5.故障排查.md](docs/5.故障排查.md) | 日志、Recorder、视觉定位和依赖问题 |
+| [docs/6.版本与升级说明.md](docs/6.版本与升级说明.md) | 当前版本和最近三个版本的升级影响 |
 | [docs/维护/1.维护者指南.md](docs/维护/1.维护者指南.md) | 框架架构、协议和 AI 治理入口 |
 | [ai/README.md](ai/README.md) | **AI 资产**：Context、Prompt、Knowledge 与协作复盘 |
 

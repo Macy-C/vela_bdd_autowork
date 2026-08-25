@@ -17,12 +17,12 @@ Runtime note:
 - `autowork_core/common/ocr_engine.py` loads these local models through the `paddleocr` package.
 - `paddleocr` is required. The legacy OCR fallback has been removed.
 
-Python 3.11 environment used in this workspace:
+Install the verified packages with Python 3.11:
 
 ```powershell
-& "c:/Users/320321651/Messy/tools/python3.11.9_bdd/python.exe" -m pip install "paddleocr==3.6.0"
-& "c:/Users/320321651/Messy/tools/python3.11.9_bdd/python.exe" -m pip install "opencv-contrib-python==4.6.0.66" "PyYAML==6.0.2"
-& "c:/Users/320321651/Messy/tools/python3.11.9_bdd/python.exe" -m pip check
+python -m pip install "paddleocr==3.6.0"
+python -m pip install "opencv-contrib-python==4.6.0.66" "PyYAML==6.0.2"
+python -m pip check
 ```
 
 `paddleocr==3.6.0` pulls in `paddlex==3.6.1`. PaddleX installs OpenCV 4.10 by default, but this project also uses `airtest==1.4.3`, which requires `opencv-contrib-python<=4.6.0.66`. After installing PaddleOCR, restore OpenCV to `4.6.0.66`; PP-OCRv5 initialization and OCR inference have been verified with that version.

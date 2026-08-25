@@ -12,7 +12,7 @@
 # Updated Date: 2026-07-27
 # Version: V1
 
-@gantry
+@gantry @step:APS_steps/Console-SRS.22788
 Feature: Console-SRS.22788
     As a CT technologist
     I want automatic cardiac phase determination reconstruction to be available for supported scan types

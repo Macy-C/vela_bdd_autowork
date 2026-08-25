@@ -25,8 +25,8 @@ _PROFILE_DEFINITIONS = (
     },
     {
         "profile_id": "precision",
-        "label": "专心精确",
-        "start_allowed": True,
+        "label": "专心精确（已退役）",
+        "start_allowed": False,
         "investigation_policy": "expanded_on_demand",
         "user_interaction_policy": "frontloaded_only",
         "repair_policy": {
@@ -44,6 +44,21 @@ _PROFILE_DEFINITIONS = (
         "repair_policy": {
             "design": "not_implemented",
             "implementation": "not_implemented",
+            "authority_change": "terminate_job",
+        },
+    },
+)
+
+_HISTORICAL_PROFILE_DEFINITIONS = (
+    {
+        "profile_id": "precision",
+        "label": "专心精确",
+        "start_allowed": True,
+        "investigation_policy": "expanded_on_demand",
+        "user_interaction_policy": "frontloaded_only",
+        "repair_policy": {
+            "design": "progress_bounded_technical",
+            "implementation": "manifest_scoped",
             "authority_change": "terminate_job",
         },
     },
@@ -72,6 +87,27 @@ def resolve_generation_profile(profile_id=None):
     raise ValueError(f"未知 Generation Profile: {selected}")
 
 
+def profile_lease_is_recognized(profile):
+    if not isinstance(profile, dict):
+        return False
+    profile_id = profile.get("profile_id")
+    fingerprint = profile.get("profile_fingerprint")
+    if not profile_id or not fingerprint:
+        return False
+    try:
+        if resolve_generation_profile(profile_id).get(
+                "profile_fingerprint"
+        ) == fingerprint:
+            return True
+    except ValueError:
+        return False
+    return any(
+        _profile_value(definition).get("profile_fingerprint") == fingerprint
+        for definition in _HISTORICAL_PROFILE_DEFINITIONS
+        if definition.get("profile_id") == profile_id
+    )
+
+
 def project_generation_admission(
         *,
         request,
@@ -79,16 +115,32 @@ def project_generation_admission(
         context_budget,
         request_identity_valid,
         profile_id=None,
+    decision_pack=None,
+    answer_record=None,
+        enforcement="shadow",
+        generation_contract_lease=None,
     ):
     request = dict(request or {})
     state = dict(state or {})
     context_budget = dict(context_budget or {})
     profile = resolve_generation_profile(profile_id)
+    if enforcement not in {"shadow", "active"}:
+        raise ValueError(
+            f"无效 Generation admission enforcement: {enforcement}"
+        )
     revision_seal = (request.get("revision_snapshot") or {}).get("seal")
     state_revision_seal = (state.get("revision") or {}).get("seal")
     readiness = request.get("readiness") or {}
     ambiguity = state.get("ambiguity") or {}
     decision = state.get("decision") or {}
+    decision_pack = dict(decision_pack or {})
+    answer_record = dict(answer_record or {})
+    generation_contract_lease = dict(generation_contract_lease or {})
+    decision_batch = _decision_batch_receipt(
+        decision,
+        decision_pack,
+        answer_record,
+    )
     active_transaction = state.get("active_transaction") or {}
     hard_blockers = [
         item
@@ -139,26 +191,24 @@ def project_generation_admission(
         ),
         _check(
             "decision_batch",
-            decision.get("status") in {
-                "answered",
-                "forensic",
-                "not_required",
-            },
+            bool(decision_batch.get("complete")),
             _fingerprint({
                 "status": decision.get("status"),
                 "pack": decision.get("pack") or {},
                 "answers": decision.get("answers") or {},
+                "batch": decision_batch,
             }),
         ),
         _check(
             "generation_contract",
-            bool(request.get("generation_contract")),
-            _fingerprint(request.get("generation_contract")),
-        ),
-        _check(
-            "context_budget",
-            context_budget.get("status") == "within_target",
-            _fingerprint(context_budget),
+            bool(
+                generation_contract_lease.get("lease_fingerprint")
+                or request.get("generation_contract")
+            ),
+            (
+                generation_contract_lease.get("lease_fingerprint")
+                or _fingerprint(request.get("generation_contract"))
+            ),
         ),
         _check(
             "workflow_admissible",
@@ -185,18 +235,94 @@ def project_generation_admission(
         for item in checks
         if item["status"] != "passed"
     ]
+    performance_warnings = []
+    if context_budget.get("status") not in {None, "within_target"}:
+        performance_warnings.append(_context_budget_warning(context_budget))
     value = {
         "generation_admission_version": GENERATION_ADMISSION_VERSION,
-        "enforcement": "shadow",
+        "enforcement": enforcement,
         "status": "passed" if not blocking_codes else "rejected",
         "request_id": request.get("request_id"),
         "profile": profile,
+        "decision_batch": decision_batch,
         "checks": checks,
+        "performance_checks": [{
+            "code": "context_budget",
+            "status": context_budget.get("status") or "unknown",
+            "source_fingerprint": _fingerprint(context_budget),
+            "diagnostic": _context_budget_warning(context_budget),
+        }],
+        "performance_warnings": performance_warnings,
         "blocking_codes": blocking_codes,
-        "job_creation_allowed": False,
+        "job_creation_allowed": bool(
+            enforcement == "active" and not blocking_codes
+        ),
     }
     value["admission_fingerprint"] = _fingerprint(value)
     return value
+
+
+def _context_budget_warning(context_budget):
+    context_budget = dict(context_budget or {})
+    return {
+        "budget_version": context_budget.get("budget_version"),
+        "status": context_budget.get("status") or "unknown",
+        "default_total_bytes": context_budget.get("default_total_bytes"),
+        "target_bytes": context_budget.get("target_bytes"),
+        "over_by_bytes": context_budget.get("over_by_bytes"),
+        "largest_components": list(context_budget.get("largest_components") or []),
+        "message": (
+            "默认AI上下文超过性能目标；系统将继续创建Job并依赖紧凑投影/按需查询。"
+            if context_budget.get("status") == "over_target"
+            else "默认AI上下文预算状态未通过性能检查。"
+        ),
+    }
+
+
+def _decision_batch_receipt(decision, pack, answers):
+    pointer = decision.get("pack") or {}
+    answer_pointer = decision.get("answers") or {}
+    questions = [
+        item
+        for item in pack.get("questions") or ()
+        if isinstance(item, dict)
+    ]
+    blocking_ids = sorted(
+        str(item.get("question_id"))
+        for item in questions
+        if item.get("blocking") and item.get("question_id")
+    )
+    answered_ids = sorted(
+        str(item.get("question_id"))
+        for item in answers.get("answers") or ()
+        if item.get("question_id")
+    )
+    forensic_ids = sorted(
+        str(item.get("blocker_id"))
+        for item in pack.get("forensic_blockers") or ()
+        if item.get("blocker_id")
+    )
+    batch = pack.get("batch") or {}
+    return {
+        "status": decision.get("status"),
+        "pack_id": pack.get("pack_id") or pointer.get("pack_id"),
+        "pack_fingerprint": (
+            pack.get("pack_fingerprint")
+            or pointer.get("pack_fingerprint")
+        ),
+        "answer_fingerprint": (
+            answers.get("answer_fingerprint")
+            or answer_pointer.get("answer_fingerprint")
+        ),
+        "batch_id": batch.get("batch_id"),
+        "blocking_question_ids": blocking_ids,
+        "answered_question_ids": answered_ids,
+        "forensic_blocker_ids": forensic_ids,
+        "complete": bool(
+            decision.get("status") in {"answered", "not_required", "forensic"}
+            and set(blocking_ids) <= set(answered_ids)
+        ),
+    }
 
 
 def _profile_value(definition):

@@ -12,6 +12,9 @@ from autowork_core.utils.debug_tools.recorder.generation_plan import (
     SUPPORTED_PLAN_VERSIONS,
     plan_artifact_identity_is_valid,
 )
+from autowork_core.utils.debug_tools.recorder.generation_job_result import (
+    load_generation_job_result,
+)
 from autowork_core.utils.debug_tools.recorder.generation_transaction import (
     transaction_code_snapshot_matches,
 )
@@ -31,6 +34,7 @@ from autowork_core.utils.debug_tools.recorder.transaction_integrity import (
 )
 from autowork_core.utils.debug_tools.recorder.workflow_state import (
     load_workflow_state,
+    retired_job_entry_for_result,
 )
 
 
@@ -335,16 +339,148 @@ def validate_accepted_transaction_capability_source(
         *,
         project_root=None,
 ):
+    session_dir, request, plan, runtime_verification = (
+        validate_completed_transaction_artifact_source(
+            report_path,
+            report,
+            project_root=project_root,
+        )
+    )
+    report_path = Path(report_path).resolve()
+    state = load_workflow_state(session_dir, report.get("request_id"))
+    job_result = None
+    terminal_entry = None
+    terminal_job_result = bool(
+        state.get("last_job_result")
+        and (
+            not state.get("current_job")
+            or state.get("status") in {"completed", "failed"}
+        )
+    )
+    if terminal_job_result:
+        job_result = load_generation_job_result(
+            session_dir,
+            state.get("last_job_result") or {},
+        )
+        terminal_entry = retired_job_entry_for_result(
+            state,
+            state.get("last_job_result") or {},
+        )
+    if state.get("current_job") or terminal_entry is not None:
+        workflow_valid = _job_result_matches_transaction(
+            session_dir,
+            state,
+            report_path,
+            report,
+        )
+    else:
+        result = state.get("last_result") or {}
+        workflow_valid = not any((
+            state.get("status") != "completed",
+            result.get("transaction_id") != report.get("transaction_id"),
+            Path(result.get("report_path") or "").resolve() != report_path,
+            result.get("status") != report.get("status"),
+            result.get("completion_fingerprint")
+            != report.get("completion_fingerprint"),
+            result.get("result_fingerprint")
+            != report.get("result_fingerprint"),
+        ))
+    if job_result is not None:
+        runtime_verification = _runtime_verification_from_job_result(
+            job_result
+        )
+    if any((
+        not workflow_valid,
+        plan.get("plan_fingerprint")
+        != (state.get("plan") or {}).get("plan_fingerprint"),
+    )):
+        raise ValueError("Completed transaction report fingerprint 无效")
+    plan_source = plan.get("source") or {}
+    if (
+        plan_source.get("plan_origin") == "legacy_import"
+        or plan_source.get("confirmation_source") == "legacy_import"
+    ):
+        raise ValueError("legacy_import Plan 不能提升为当前 confirmed Capability")
+    return session_dir, request, plan, runtime_verification
+
+
+def _runtime_verification_from_job_result(job_result):
+    stages = (job_result or {}).get("stages") or {}
+    if job_result.get("status") != "completed":
+        return "not_run"
+    if (
+        (stages.get("runtime") or {}).get("status") == "passed"
+        and (stages.get("oracle") or {}).get("status") == "passed"
+    ):
+        return "oracle_verified"
+    if (stages.get("runtime") or {}).get("status") == "passed":
+        return "passed"
+    return "not_run"
+
+
+def _job_result_matches_transaction(
+        session_dir,
+        state,
+        report_path,
+        report,
+    ):
+    result = load_generation_job_result(
+        session_dir,
+        state.get("last_job_result") or {},
+    )
+    if result is None or result.get("status") != "completed":
+        return False
+    terminal = retired_job_entry_for_result(
+        state,
+        state.get("last_job_result") or {},
+    )
+    pointer = (
+        (state.get("current_job") or {})
+        if state.get("current_job")
+        else ((terminal or {}).get("job") or {})
+    )
+    if (result.get("job") or {}).get("job_id") != pointer.get("job_id"):
+        return False
+    owner = (
+        ((result.get("stages") or {}).get("transaction") or {}).get(
+            "owner"
+        ) or {}
+    )
+    if not isinstance(owner, dict) or owner.get(
+            "owner"
+    ) != "generation_transaction":
+        return False
+    path = Path(str(owner.get("path") or ""))
+    path = path.resolve() if path.is_absolute() else (
+        Path(session_dir).resolve() / path
+    ).resolve()
+    return not any((
+        state.get("status") != "completed",
+        path != Path(report_path).resolve(),
+        owner.get("transaction_id") != report.get("transaction_id"),
+        owner.get("status") != report.get("status"),
+        owner.get("completion_fingerprint")
+        != report.get("completion_fingerprint"),
+        owner.get("result_fingerprint") != report.get("result_fingerprint"),
+    ))
+
+
+def validate_completed_transaction_artifact_source(
+        report_path,
+        report,
+        *,
+        project_root=None,
+    ):
     report_path = Path(report_path).resolve()
     if report.get("status") not in {"completed", "completed_no_changes"}:
-        raise ValueError("Capability 只能由已完成 transaction 发布")
+        raise ValueError("Transaction artifact source尚未完成")
     for audit_name in (
         "plan_conformance_audit",
         "evidence_audit",
         "generation_policy_audit",
     ):
         if (report.get(audit_name) or {}).get("status") != "passed":
-            raise ValueError(f"Capability 发布缺少通过审计: {audit_name}")
+            raise ValueError(f"Transaction artifact缺少通过审计: {audit_name}")
 
     session_dir = Path(report["session_dir"]).resolve()
     if (
@@ -353,26 +489,17 @@ def validate_accepted_transaction_capability_source(
         != Path(project_root).resolve()
     ):
         raise ValueError("Transaction project_root 与当前项目不一致")
-    state = load_workflow_state(session_dir, report.get("request_id"))
-    result = state.get("last_result") or {}
     declared_report_fingerprint = report.get("completion_fingerprint")
     actual_report_fingerprint = completed_report_fingerprint(report)
     declared_result_fingerprint = report.get("result_fingerprint")
     actual_result_fingerprint = transaction_result_fingerprint(report)
     if any((
-        state.get("status") != "completed",
-        result.get("transaction_id") != report.get("transaction_id"),
-        Path(result.get("report_path") or "").resolve() != report_path,
-        result.get("status") != report.get("status"),
         not declared_report_fingerprint,
-        result.get("completion_fingerprint")
-        != declared_report_fingerprint,
         actual_report_fingerprint != declared_report_fingerprint,
         not declared_result_fingerprint,
-        result.get("result_fingerprint") != declared_result_fingerprint,
         actual_result_fingerprint != declared_result_fingerprint,
     )):
-        raise ValueError("Completed transaction report fingerprint 无效")
+        raise ValueError("Transaction artifact fingerprint 无效")
     request_path = _transaction_artifact_path(
         session_dir,
         report.get("request_path"),
@@ -403,8 +530,6 @@ def validate_accepted_transaction_capability_source(
         not plan_artifact_identity_is_valid(plan),
         plan.get("request_id") != report.get("request_id"),
         plan.get("plan_fingerprint") != expected_fingerprint,
-        plan.get("plan_fingerprint")
-        != (state.get("plan") or {}).get("plan_fingerprint"),
         (plan.get("source") or {}).get("revision_seal")
         != (lease.get("revision") or {}).get("seal"),
         lease_plan_path != plan_path,
@@ -421,12 +546,6 @@ def validate_accepted_transaction_capability_source(
             plan_audit=report.get("plan_conformance_audit"),
     ):
         raise ValueError("Transaction Code Manifest 无效或绑定不一致")
-    plan_source = plan.get("source") or {}
-    if (
-        plan_source.get("plan_origin") == "legacy_import"
-        or plan_source.get("confirmation_source") == "legacy_import"
-    ):
-        raise ValueError("legacy_import Plan 不能提升为当前 confirmed Capability")
     if not transaction_code_snapshot_matches(
         report,
         effective_project_root,

@@ -34,6 +34,14 @@ from autowork_core.utils.debug_tools.recorder.generation_contract import (
     generation_contract_lease,
     generation_contract_lease_matches,
 )
+from autowork_core.utils.debug_tools.recorder.generation_job import (
+    generation_job_lease_is_valid,
+    load_generation_job,
+)
+from autowork_core.utils.debug_tools.recorder.generation_profile import (
+    profile_lease_is_recognized,
+    resolve_generation_profile,
+)
 from autowork_core.utils.debug_tools.recorder.models import SCHEMA_VERSION
 from autowork_core.utils.debug_tools.recorder.project_memory import (
     inspect_request_memory_freshness,
@@ -56,6 +64,7 @@ from autowork_core.utils.debug_tools.recorder.semantic_pack import (
     SUPPORTED_SEMANTIC_PACK_VERSIONS,
 )
 from autowork_core.utils.debug_tools.recorder.workflow_state import (
+    JOB_WORKFLOW_STATE_VERSION,
     load_workflow_state,
     next_workflow_action,
     write_workflow_state,
@@ -76,6 +85,22 @@ def inspect_workflow(
     request = _read_json(request_path)
     session_dir = session_dir_for_request_path(request_path, request)
     existing = load_workflow_state(session_dir, request.get("request_id"))
+    terminal_job_workflow = bool(
+        existing.get("workflow_state_version") == JOB_WORKFLOW_STATE_VERSION
+        and not existing.get("current_job")
+        and existing.get("last_job_result")
+    )
+    if (
+        existing.get("workflow_state_version") == JOB_WORKFLOW_STATE_VERSION
+        and existing.get("current_job")
+    ):
+        return _inspect_job_workflow(
+            session_dir,
+            request,
+            existing,
+            write=write,
+            return_brief=return_brief,
+        )
     errors = []
     warnings = []
     decision = {}
@@ -154,7 +179,14 @@ def inspect_workflow(
                 brief = None
             else:
                 try:
-                    if (existing.get("plan") or {}).get("path"):
+                    if terminal_job_workflow:
+                        brief = build_generation_brief(
+                            session_dir,
+                            request,
+                            write=write,
+                        )
+                        plan_artifact = None
+                    elif (existing.get("plan") or {}).get("path"):
                         brief = load_generation_brief(
                             _brief_path(session_dir, existing)
                         )
@@ -209,7 +241,12 @@ def inspect_workflow(
 
     state = {
         "schema_version": SCHEMA_VERSION,
-        "workflow_state_version": "3.0",
+        "workflow_state_version": (
+            JOB_WORKFLOW_STATE_VERSION
+            if existing.get("workflow_state_version")
+            == JOB_WORKFLOW_STATE_VERSION
+            else "3.0"
+        ),
         "request_id": request.get("request_id"),
         "request_path": str(request_path),
         "session_dir": str(session_dir),
@@ -234,6 +271,14 @@ def inspect_workflow(
         ),
         "active_transaction": None,
     }
+    if state["workflow_state_version"] == JOB_WORKFLOW_STATE_VERSION:
+        state.update({
+            "current_job": existing.get("current_job"),
+            "job_execution": existing.get("job_execution"),
+            "retired_jobs": list(existing.get("retired_jobs") or []),
+            "last_job_result": existing.get("last_job_result"),
+            "attempt_history": list(existing.get("attempt_history") or []),
+        })
     if (
         status == "ready"
         and existing.get("status") == "ready"
@@ -253,6 +298,10 @@ def inspect_workflow(
         state["status"] = existing["status"]
         state["next_action"] = existing.get("next_action")
         state["active_transaction"] = existing.get("active_transaction")
+        state["last_result"] = existing.get("last_result")
+    elif terminal_job_workflow and status == "ready":
+        state["status"] = existing.get("status")
+        state["next_action"] = existing.get("next_action")
         state["last_result"] = existing.get("last_result")
     if write:
         write_workflow_state(session_dir, state)
@@ -346,6 +395,9 @@ def submit_generation_design(
         note="",
         confirmation_source="ai_generated",
         plan_origin="external_ai",
+        generation_job_lease=None,
+        generation_job_claim_id=None,
+        generation_job_expected_epoch=None,
     ):
     return _submit_generation_input(
         request_path,
@@ -356,6 +408,9 @@ def submit_generation_design(
         note=note,
         confirmation_source=confirmation_source,
         plan_origin=plan_origin,
+        generation_job_lease=generation_job_lease,
+        generation_job_claim_id=generation_job_claim_id,
+        generation_job_expected_epoch=generation_job_expected_epoch,
     )
 
 
@@ -407,6 +462,9 @@ def _submit_generation_input(
         note,
         confirmation_source,
         plan_origin,
+        generation_job_lease=None,
+        generation_job_claim_id=None,
+        generation_job_expected_epoch=None,
     ):
     prepared = _prepare_generation_input(
         request_path,
@@ -417,6 +475,9 @@ def _submit_generation_input(
         confirmation_source=confirmation_source,
         plan_origin=plan_origin,
         write=True,
+        generation_job_lease=generation_job_lease,
+        generation_job_claim_id=generation_job_claim_id,
+        generation_job_expected_epoch=generation_job_expected_epoch,
     )
     request_path = prepared["request_path"]
     request = prepared["request"]
@@ -442,7 +503,19 @@ def _submit_generation_input(
         generation_contract_lease=prepared[
             "generation_contract_lease"
         ],
+        generation_job_lease=prepared["generation_job_lease"],
     )
+    if prepared["generation_job_lease"]:
+        artifact["plan_path"] = str(output)
+        artifact["workflow_status"] = state["status"]
+        artifact["brief"] = state.get("brief") or {}
+        artifact["learning"] = {
+            "status": "deferred_until_accepted_feedback",
+            "memory_ids": [],
+            "capability_paths": [],
+            "warnings": [],
+        }
+        return artifact
     state["plan"] = plan_pointer(session_dir, artifact, output)
     state["status"] = "ready"
     state["next_action"] = next_workflow_action("ready")
@@ -470,6 +543,9 @@ def _prepare_generation_input(
         confirmation_source,
         plan_origin,
         write,
+        generation_job_lease=None,
+        generation_job_claim_id=None,
+        generation_job_expected_epoch=None,
     ):
     request_path = Path(request_path).resolve()
     request = _read_json(request_path)
@@ -513,6 +589,28 @@ def _prepare_generation_input(
             write=False,
             return_brief=True,
         )
+    if generation_job_lease:
+        if not generation_job_lease_is_valid(generation_job_lease):
+            raise ValueError("Generation Job lease无效")
+        pointer = state.get("current_job") or {}
+        execution = state.get("job_execution") or {}
+        if any((
+            state.get("workflow_state_version") != JOB_WORKFLOW_STATE_VERSION,
+            state.get("status") != "running",
+            execution.get("phase") != "design",
+            execution.get("claim_id") != generation_job_claim_id,
+            int(execution.get("epoch") or 0)
+            != int(generation_job_expected_epoch or -1),
+            pointer.get("job_id") != generation_job_lease.get("job_id"),
+            pointer.get("job_fingerprint")
+            != generation_job_lease.get("job_fingerprint"),
+            pointer.get("nonce") != generation_job_lease.get("job_nonce"),
+            pointer.get("profile_lease_fingerprint")
+            != generation_job_lease.get("profile_fingerprint"),
+        )):
+            raise ValueError("Generation Job claim、epoch或lease与Workflow不一致")
+    elif state.get("current_job"):
+        raise ValueError("当前Workflow必须使用Generation Job Design入口")
     if state.get("status") in {"completed", "failed"}:
         memory_freshness = inspect_request_memory_freshness(
             session_dir,
@@ -526,7 +624,9 @@ def _prepare_generation_input(
                     or "目标相关项目经验已变化，请重新物化 RequestV3"
                 )
             )
-    if state.get("status") in {"blocked", "stale", "running"}:
+    if state.get("status") in {"blocked", "stale"} or (
+        state.get("status") == "running" and not generation_job_lease
+    ):
         raise ValueError(
             f"当前 workflow 不能提交计划: status={state.get('status')}"
         )
@@ -584,6 +684,7 @@ def _prepare_generation_input(
             session_dir,
             write=write,
         ),
+        "generation_job_lease": generation_job_lease,
     }
 
 
@@ -917,6 +1018,77 @@ def _hard_blockers(request):
         )
         if (item.get("recovery") or {}).get("hard_blocker")
     ]
+
+
+def _inspect_job_workflow(
+        session_dir,
+        request,
+        state,
+        *,
+        write,
+        return_brief,
+    ):
+    job = load_generation_job(
+        session_dir,
+        state.get("current_job") or {},
+    )
+    errors = []
+    if job is None:
+        errors.append("job_integrity_failed")
+    else:
+        job_request = job.get("request") or {}
+        profile = job.get("profile_lease") or {}
+        if any((
+            not request_identity_is_valid(request),
+            job_request.get("request_id") != request.get("request_id"),
+            job_request.get("request_fingerprint")
+            != request.get("request_fingerprint"),
+            job_request.get("revision_seal")
+            != (request.get("revision_snapshot") or {}).get("seal"),
+            not request_matches_current_projection(session_dir, request),
+        )):
+            errors.append("job_request_stale")
+        revision_matches, _current_revision = request_revision_matches(
+            session_dir,
+            request,
+            request.get("revision_snapshot") or {},
+        )
+        if not revision_matches:
+            errors.append("job_revision_stale")
+        if not generation_contract_lease_matches(
+            session_dir,
+            job.get("generation_contract_lease") or {},
+        ):
+            errors.append("job_contract_stale")
+        if not profile_lease_is_recognized(profile):
+            errors.append("job_profile_stale")
+    if errors:
+        state = dict(state)
+        execution = dict(state.get("job_execution") or {})
+        state.update({
+            "status": "failed",
+            "next_action": "review_generation_job_failure",
+            "updated_at": datetime.now().isoformat(timespec="seconds"),
+            "errors": errors,
+            "job_execution": {
+                **execution,
+                "phase": "failed",
+                "epoch": int(execution.get("epoch") or 0) + 1,
+                "last_issue_fingerprint": hashlib.sha256(
+                    json.dumps(errors, separators=(",", ":")).encode("utf-8")
+                ).hexdigest(),
+            },
+        })
+    brief = None
+    try:
+        brief = load_generation_brief(_brief_path(session_dir, state))
+    except (OSError, ValueError):
+        if not errors:
+            state = dict(state)
+            state["status"] = "failed"
+            state["next_action"] = "review_generation_job_failure"
+            state["errors"] = ["job_brief_invalid"]
+    return (state, brief) if return_brief else state
 
 
 def _brief_pointer(session_dir, brief):

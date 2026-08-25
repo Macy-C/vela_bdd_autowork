@@ -11,7 +11,7 @@
 # Updated Date: 2026-07-30
 # Version: V1
 
-@SKIP @notfinsh
+@step:APS_steps/Console-SRS.22790 @SKIP @notfinsh
 Feature: Console-SRS.22790
     As a CT technologist
     I want Precise Phase reconstruction to be available when phase tolerance meets its supported threshold

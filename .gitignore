@@ -19,10 +19,5 @@ logs/
 .venv/
 venv/
 
-artifacts/logs/
-artifacts/screenshots/
-artifacts/recordings/
-artifacts/recording_sessions/
-artifacts/reports/
-artifacts/run-results/
+artifacts/
 framework_validation/output/

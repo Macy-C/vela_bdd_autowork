@@ -59,9 +59,9 @@ PIC_SETTING:
 
 SPARK_REPORT: true # true / false  # 自定义 Spark 风格报告
 
-APP_LAUNCH_MODE: "auto"   # auto / attach  #启动方式
+APP_LAUNCH_MODE: "attach"   # auto / attach  #启动方式
 APP_SETTING:   ### 应用配置
- APP_PATH: "runtime"   # 启动路径；runtime 调用 Bdd.application 的 start/stop Hook
+ APP_PATH: ""   # 启动路径；runtime 调用 Bdd.application 的 start/stop Hook
  BACKEND: "uia"   # uia / win32
  PROCESS_TRACK_MODE: "snapshot" # snapshot 在首个 Step 前等待 1 秒后采样；也支持 root / none
 

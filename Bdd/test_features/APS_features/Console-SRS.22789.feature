@@ -11,6 +11,7 @@
 # Updated Date: 2026-07-29
 # Version: V1
 
+@step:APS_steps/Console-SRS.22789
 Feature: Console-SRS.22789
     As a CT technologist
     I want automatic cardiac phase determination reconstruction to be unavailable when Full Coverage, Longer Cycle Time is enabled
