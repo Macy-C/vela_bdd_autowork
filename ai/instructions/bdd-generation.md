@@ -62,12 +62,16 @@
   package re-exports, dynamic factories, direct pywinauto, inline locator dicts,
   generated `set_root()`, fixed sleeps, placeholders, empty data files, or
   unrelated refactors.
-- One top-level window has one WindowPage and one Root. Use WindowView only for a
-  stable same-window subpage with an activation boundary. Keep one-off order,
-  cross-window flow, and scenario assertions in Steps.
+- One stable business top-level window has one WindowPage. WindowView uses the
+  parent Root by default. Only a frozen `child_view` ownership candidate may
+  authorize a WindowView with its own `root_locator` and single-root YAML; a
+  transient child HWND alone does not create another business Page. Keep
+  one-off order, cross-window flow, and scenario assertions in Steps.
 - Put targets in YAML. Priority: Child -> XPath -> OCR + Region -> POS. A rename
   uses the same Action's `evidence_name`; packages cannot cross Roots. PIC is
   default-deny and must use the exact authorized template, Region and threshold.
+- Preserve the exact frozen observed title set when it is needed to disambiguate
+  a Window Root; escape each title and never invent a broader wildcard.
 - Select only a frozen `locator_candidate_id`; omit it for the default. Never
   invent XPath/proof. Targets use `$loc:name`/`$name`, never bare; structural
   `name` is Accessible Name. OCR/PIC require Region; no default fallback.

@@ -271,7 +271,7 @@ def _transaction_passed(report, request, plan_artifact):
     if (
         (report.get("implementation_manifest") or {}).get(
             "implementation_manifest_version"
-        ) in {"1.6", "1.7"}
+        ) in {"1.6", "1.7", "1.8"}
         and (report.get("terminal_snapshot_audit") or {}).get("status")
         != "passed"
     ):

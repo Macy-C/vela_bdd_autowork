@@ -1,52 +1,64 @@
-# Vela BDD 项目
+# BDD Autowork 参考宿主
 
-`Bdd/`是基于BDD Autowork构建的Vela自动化宿主。产品应用路径、进程与服务名称、
-资源标签、Page Object、locator、data、外部集成和产品测试都属于这里，不应进入
-`autowork_core/`或框架文档。
+`Bdd/`是框架发布源中的中性宿主骨架。实际产品项目拥有自己的Feature、Step、
+Page Object、locator、data、应用生命周期、外部集成和项目AI资产；这些内容不应进入
+`autowork_core/`或框架发布源的参考宿主。
 
-## 环境
+## 目录职责
 
-在项目根目录安装Python依赖：
+- `config.yaml`：项目运行默认配置；框架更新时保留。
+- `test_features/`：本地调试Feature；正式项目可另建`features/`。
+- `steps/`：Behave Step definitions。
+- `page_obj/`：项目Page Object与WindowView。
+- `locators/`：项目locator YAML。
+- `data/`：项目data YAML及图片资源；`public_data.yaml`必须存在。
+- `application.py`：可选的项目应用生命周期Hook模板。
+- `ai/`：当前宿主拥有的项目知识和质量Oracle，不随框架更新而替换。
+
+## 运行
+
+在项目根目录安装依赖：
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-Gantry托管程序集集成所需的`pythonnet`由顶层依赖清单统一安装；供应商DLL及环境要求见
-[Gantry集成与排障](integrations/gantry/README.md)。
+正式运行：
+
+```powershell
+python -m Bdd.runner
+```
+
+本地调试：
+
+```powershell
+python -m Bdd.local_runner [feature路径]
+```
 
 ## 应用生命周期
 
-`Bdd/application.py`是Vela应用和Simulator启停、清理及就绪行为的运行时事实源：
+应用行为由`Bdd/config.yaml`中的`APP_LAUNCH_MODE`和`APP_SETTING.APP_PATH`决定：
 
-- 当`APP_SETTING.APP_PATH`为`runtime`时，必须提供`start_application()`和
-  `stop_application()`。
-- `prepare_scenario(context, scenario)`和`cleanup_scenario(context, scenario)`
-  负责每个UIScenario前后的项目资源。
-- `auto`模式启动Vela托管进程并等待Patient窗口就绪；`attach`模式保留已有应用进程。
-- 有效的`@gantry`标签会初始化`SimulatorPage`；被跳过或带`@api`的Scenario不会进入
-  项目生命周期。
+- `attach`连接并保留已有应用，不调用应用启停Hook。
+- `auto`配合应用路径时，由框架启动并清理应用进程。
+- `auto`配合`APP_PATH: runtime`时，宿主必须实现`application.py`中的
+  `start_application()`和`stop_application()`；模板默认失败关闭。
+- `prepare_scenario(context, scenario)`和`cleanup_scenario(context, scenario)`是可选的
+  场景资源Hook，模板默认不执行任何操作。
 
-## 产品知识
+不需要自定义生命周期时，可以删除`application.py`，但不得将`APP_PATH`配置为
+`runtime`。
 
-iPatient UI Inventory MCP是可选的Vela产品知识候选来源。它可以把业务意图映射到控件、
-用途、自动化locator和可行性，但它不是运行时证据：不能证明控件当前存在或唯一，也不能
-授权PIC。
+## 项目AI资产
 
-正式使用结果时，必须冻结Provider和数据库指纹、query、result ID以及结果hash。该MCP
-不可用时Recorder V5仍正常降级运行。外部数据库继续由Provider管理，本仓库只保存有界的
-查询provenance。
-
-## 项目文档
-
-- [Gantry集成与排障](integrations/gantry/README.md)
-- [历史应用脚本](resources/application/README.md)
-- [项目AI资产](ai/README.md)
+`Bdd/ai/`属于宿主项目。框架发布源只保留目录说明、忽略规则和空Oracle注册表；不得提交
+本地Knowledge、录制证据、运行报告或产品业务事实。详见[项目AI资产](ai/README.md)。
 
 ## 更新框架
 
-从框架仓库拉取目标版本后，完整替换本项目中的框架资产目录和根文件；保留整个`Bdd/`、
-`config/`和`artifacts/`。项目开发不直接修改`autowork_core/`、顶层`ai/`、`docs/`、
+从框架仓库拉取目标版本后，完整替换本项目中的框架资产目录和根文件；保留整个`Bdd/`
+和`artifacts/`。顶层`config/`是框架Python包，也随框架更新。项目开发不直接修改
+`autowork_core/`、`config/`、顶层`ai/`、`docs/`、
 `.github/`或`resources/`。`framework_validation/`不复制到项目仓库。替换后检查Git diff并
 运行轻量验证，再在当前项目仓库提交：
 
@@ -54,8 +66,8 @@ iPatient UI Inventory MCP是可选的Vela产品知识候选来源。它可以把
 python -B -m autowork_core.utils.debug_tools.framework_smoke --project-root .
 ```
 
-只有项目自己的`Bdd/`或`config/`发生变化时才运行项目测试：
+发布源维护者另外运行框架验证套件：
 
 ```powershell
-python -m unittest discover -s Bdd/tests -p "test_*.py"
+python -B -m unittest discover -s framework_validation/tests -p "test_*.py"
 ```

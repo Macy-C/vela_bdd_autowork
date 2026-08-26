@@ -5,7 +5,7 @@ import hashlib
 import inspect
 import json
 import re
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from autowork_core.page import BasePage
 from autowork_core.utils.debug_tools.recorder.ai_capability_registry import (
@@ -16,10 +16,11 @@ from autowork_core.utils.debug_tools.recorder.identity import (
 )
 
 
-IMPLEMENTATION_MANIFEST_VERSION = "1.7"
-IMPLEMENTATION_PACKET_VERSION = "1.0"
+IMPLEMENTATION_MANIFEST_VERSION = "1.8"
+IMPLEMENTATION_PACKET_VERSION = "1.2"
 READABLE_IMPLEMENTATION_MANIFEST_VERSIONS = {
     "1.6",
+    "1.7",
     IMPLEMENTATION_MANIFEST_VERSION,
 }
 
@@ -73,6 +74,7 @@ def compact_implementation_manifest_contract():
             "Prepare rejects symbolic links in generation roots or guarded project paths; snapshots never follow link targets.",
             "Every Step exposes its exact decorator keyword, template pattern, and function parameters; Scenario Outline inputs bind to those parameters.",
             "Every named operation target exposes one strict $loc: runtime reference; bare locator names are not implementation arguments.",
+            "Window Roots preserve the exact frozen observed title set when available; multiple titles compile to one anchored escaped alternation.",
             "Text-content read and assertion locators omit dynamic name/title values while retaining frozen structural identity such as AutoId, control type, and Root.",
             "A read-only locator key requires a content-addressed locator/window-root candidate; Page method string references do not prove YAML key existence.",
             "Exact Page method reuse binds the frozen linear call sequence and verifies the Step method call plus its frozen arguments; modify/create remain writable body implementations.",
@@ -134,19 +136,25 @@ def build_implementation_manifest(
         )
         for view_id, view in (owner.get("views") or {}).items():
             view = view if isinstance(view, dict) else {}
+            view_object = _safe_path(view.get("view_object"))
+            view_locator_file = _safe_path(view.get("locator_file"))
             _add_file(
                 files,
-                view.get("view_object"),
+                view_object,
                 f"view:{view_id}",
-                write_required=False,
+                write_required=owner_write or (
+                    bool(view_object) and view_object not in baseline
+                ),
                 baseline=baseline,
                 errors=errors,
             )
             _add_file(
                 files,
-                view.get("locator_file"),
+                view_locator_file,
                 f"view_locators:{view_id}",
-                write_required=False,
+                write_required=owner_write or (
+                    bool(view_locator_file) and view_locator_file not in baseline
+                ),
                 baseline=baseline,
                 errors=errors,
             )
@@ -307,7 +315,7 @@ def build_implementation_manifest(
             task = {
                 "file": str(routed_locator_file),
                 "key": str(
-                    owner.get("root_locator")
+                    route.get("root_locator")
                     if str(locator.get("kind") or "") == "top_level"
                     else locator.get("name")
                     or ""
@@ -541,27 +549,7 @@ def build_implementation_packet(manifest):
         for item in manifest.get("files") or ()
         if isinstance(item, dict) and item.get("path")
     }
-    pages = {}
-    for step in manifest.get("steps") or ():
-        page_path = _packet_step_page_path(step)
-        if not page_path:
-            continue
-        locator_file = str(step.get("locator_file") or "")
-        root = next((
-            item.get("key")
-            for item in step.get("locator_patch") or ()
-            if item.get("kind") == "top_level"
-        ), None)
-        pages.setdefault(page_path, {
-            "path": page_path,
-            "module": _packet_module_name(page_path),
-            "class_name": _packet_page_class_name(page_path),
-            "receiver": _packet_receiver_name(page_path),
-            "base_class": "WindowPage",
-            "root_locator_file": locator_file or None,
-            "root_locator": root,
-            "strategy": (files.get(page_path) or {}).get("strategy"),
-        })
+    pages = _packet_pages(manifest, files)
     steps = []
     for step in manifest.get("steps") or ():
         page_path = _packet_step_page_path(step)
@@ -569,14 +557,25 @@ def build_implementation_packet(manifest):
         operations = []
         for operation in step.get("operations") or ():
             receiver = operation.get("receiver") or {}
+            operation_page = pages.get(
+                _packet_operation_page_path(step, operation)
+            )
             operations.append({
                 "order": operation.get("order"),
                 "operation": operation.get("operation"),
                 "receiver": (
-                    page.get("receiver")
-                    if receiver.get("kind") == "step_bound_page" and page
+                    operation_page.get("receiver")
+                    if receiver.get("kind") == "step_bound_page"
+                    and operation_page
                     else receiver.get("receiver")
                 ),
+                "receiver_expression": _packet_receiver_expression(
+                    page,
+                    operation_page,
+                    receiver,
+                ),
+                "view_owner": receiver.get("view_owner"),
+                "page": operation_page,
                 "target": (operation.get("target_binding") or {}).get(
                     "reference"
                 ),
@@ -625,6 +624,18 @@ def build_implementation_packet(manifest):
     }
 
 
+def _packet_receiver_expression(step_page, operation_page, receiver):
+    if receiver.get("kind") != "step_bound_page" or operation_page is None:
+        return receiver.get("receiver")
+    if receiver.get("view_owner"):
+        parent = (operation_page or {}).get("parent_receiver") or (
+            step_page or {}
+        ).get("receiver")
+        if parent:
+            return f"{parent}.{operation_page.get('receiver')}"
+    return operation_page.get("receiver")
+
+
 def _packet_module_name(path):
     value = str(path or "").replace("\\", "/")
     if value.endswith(".py"):
@@ -638,9 +649,18 @@ def _packet_page_class_name(path):
     return "".join(part.capitalize() for part in package.split("_")) + "Page"
 
 
+def _packet_view_class_name(path):
+    name = Path(str(path or "")).stem
+    return "".join(part.capitalize() for part in name.split("_")) + "View"
+
+
 def _packet_receiver_name(path):
     parts = str(path or "").replace("\\", "/").split("/")
     return _identifier(parts[-2] if len(parts) >= 2 else "page")
+
+
+def _packet_view_receiver_name(path):
+    return _identifier(Path(str(path or "")).stem or "view")
 
 
 def _packet_step_page_path(step):
@@ -654,6 +674,117 @@ def _packet_step_page_path(step):
             if value:
                 return value
     return ""
+
+
+def _packet_operation_page_path(step, operation):
+    receiver = (operation or {}).get("receiver") or {}
+    if receiver.get("kind") == "step_bound_page":
+        page_path = str(receiver.get("page_object") or "")
+        if page_path:
+            return page_path
+    return _packet_step_page_path(step)
+
+
+def _packet_pages(manifest, files):
+    page_paths = set()
+    for step in manifest.get("steps") or ():
+        page_paths.add(_packet_step_page_path(step))
+        page_paths.update(
+            _packet_operation_page_path(step, operation)
+            for operation in step.get("operations") or ()
+        )
+    view_files = _packet_view_files(files, manifest)
+    top_level_patches = {
+        str(item.get("file") or ""): item.get("key")
+        for item in manifest.get("locator_patch") or ()
+        if item.get("kind") == "top_level"
+    }
+    result = {}
+    for page_path in sorted(path for path in page_paths if path):
+        view = view_files.get(page_path)
+        if view is not None:
+            locator_file = view.get("locator_file")
+            parent_path = _packet_parent_page_path(page_path)
+            result[page_path] = {
+                "path": page_path,
+                "module": _packet_module_name(page_path),
+                "class_name": _packet_view_class_name(page_path),
+                "receiver": _packet_view_receiver_name(page_path),
+                "base_class": "WindowView",
+                "parent_path": parent_path,
+                "parent_receiver": _packet_receiver_name(parent_path),
+                "locator_file": locator_file,
+                "active_locator": top_level_patches.get(locator_file),
+                "root_locator": top_level_patches.get(locator_file),
+                "strategy": (files.get(page_path) or {}).get("strategy"),
+            }
+            continue
+        locator_file = _packet_locator_file_for_page(page_path)
+        result[page_path] = {
+            "path": page_path,
+            "module": _packet_module_name(page_path),
+            "class_name": _packet_page_class_name(page_path),
+            "receiver": _packet_receiver_name(page_path),
+            "base_class": "WindowPage",
+            "root_locator_file": locator_file,
+            "root_locator": top_level_patches.get(locator_file),
+            "strategy": (files.get(page_path) or {}).get("strategy"),
+        }
+    for page in result.values():
+        if page.get("base_class") != "WindowView":
+            continue
+        parent = result.get(page.get("parent_path"))
+        if parent is None:
+            continue
+        parent.setdefault("views", []).append({
+            "receiver": page.get("receiver"),
+            "class_name": page.get("class_name"),
+            "path": page.get("path"),
+            "locator_file": page.get("locator_file"),
+            "active_locator": page.get("active_locator"),
+            "root_locator": page.get("root_locator"),
+        })
+    return result
+
+
+def _packet_parent_page_path(view_path):
+    parts = str(view_path or "").replace("\\", "/").split("/")
+    if len(parts) < 2:
+        return ""
+    return "/".join([*parts[:-1], "page.py"])
+
+
+def _packet_view_files(files, manifest):
+    locator_by_view = {}
+    for path, file_record in files.items():
+        for role in file_record.get("roles") or ():
+            role = str(role)
+            if role.startswith("view_locators:"):
+                locator_by_view[role.split(":", 1)[1]] = path
+    result = {}
+    for path, file_record in files.items():
+        for role in file_record.get("roles") or ():
+            role = str(role)
+            if role.startswith("view:"):
+                view_id = role.split(":", 1)[1]
+                result[path] = {
+                    "view_id": view_id,
+                    "locator_file": locator_by_view.get(view_id),
+                }
+    if result:
+        return result
+    view_paths = {
+        str(((operation.get("receiver") or {}).get("page_object")) or "")
+        for step in manifest.get("steps") or ()
+        for operation in step.get("operations") or ()
+        if (operation.get("receiver") or {}).get("view_owner")
+    }
+    return {path: {"view_id": Path(path).stem} for path in view_paths if path}
+
+
+def _packet_locator_file_for_page(page_path):
+    package = str(page_path).replace("\\", "/").split("/")[-2]
+    return f"Bdd/locators/{package}/window.yaml"
 
 
 def _pic_operation_target(step, action_id):
@@ -1057,12 +1188,32 @@ def _locator_route(locator, step, owners, actions, step_id):
                 name,
                 evidence_name,
             }:
+                for view_id, view in (owner.get("views") or {}).items():
+                    if str(view.get("active_locator") or "") not in {
+                        name,
+                        evidence_name,
+                    }:
+                        continue
+                    operations = [
+                        item
+                        for item in step.get("operations") or ()
+                        if isinstance(item, dict)
+                        and str(item.get("window_owner") or "") == str(owner_id)
+                        and str(item.get("view_owner") or "") == str(view_id)
+                    ]
+                    routes[(str(owner_id), str(view_id))] = _locator_route_value(
+                        owner_id,
+                        owner,
+                        str(view_id),
+                        operations,
+                    )
                 continue
             operations = [
                 item
                 for item in step.get("operations") or ()
                 if isinstance(item, dict)
                 and str(item.get("window_owner") or "") == str(owner_id)
+                and not str(item.get("view_owner") or "")
             ]
             routes[(str(owner_id), None)] = _locator_route_value(
                 owner_id,
@@ -1143,6 +1294,11 @@ def _locator_route_value(owner_id, owner, view_owner, operations):
             if view_owner
             else (owner or {}).get("root_locator_file")
         ),
+        "root_locator": (
+            view.get("active_locator")
+            if view_owner
+            else (owner or {}).get("root_locator")
+        ),
         "operations": list(operations),
         "action_ids": [
             str(item.get("target_action_id") or "")
@@ -1167,7 +1323,8 @@ def _locator_patch(
     )
     if kind == "top_level":
         root_name = str(
-            owner.get("evidence_root")
+            locator.get("evidence_name")
+            or owner.get("evidence_root")
             or owner.get("root_locator")
             or evidence_name
         )
@@ -1178,7 +1335,7 @@ def _locator_patch(
             ) or ()
             if str(item.get("root_name") or "") == root_name
         ), {})
-        patch = dict(window.get("root_criteria") or {})
+        patch = _window_root_patch(window)
         patch["top_level"] = True
         return patch
     action = next((
@@ -1242,8 +1399,38 @@ def _locator_patch(
     if _locator_content_is_observed(target, routed_operations):
         patch.pop("name", None)
         patch.pop("title", None)
-    if owner.get("root_locator") and "root" not in patch:
+    route_roots = {
+        str(item.get("view_owner") or "")
+        for item in routed_operations or ()
+        if item.get("view_owner")
+    }
+    if len(route_roots) == 1:
+        view = (owner.get("views") or {}).get(next(iter(route_roots))) or {}
+        if view.get("active_locator") and "root" not in patch:
+            patch["root"] = view["active_locator"]
+    elif owner.get("root_locator") and "root" not in patch:
         patch["root"] = owner["root_locator"]
+    return patch
+
+
+def _window_root_patch(window):
+    patch = dict((window or {}).get("root_criteria") or {})
+    if any(
+        patch.get(key) not in (None, "")
+        for key in ("title", "title_re", "name", "name_re")
+    ):
+        return patch
+    titles = sorted({
+        str((identity or {}).get("title") or "").strip()
+        for identity in (window or {}).get("window_identities") or ()
+        if str((identity or {}).get("title") or "").strip()
+    })
+    if len(titles) == 1:
+        patch["title"] = titles[0]
+    elif titles:
+        patch["title_re"] = "^(?:" + "|".join(
+            re.escape(title) for title in titles
+        ) + ")$"
     return patch
 
 
