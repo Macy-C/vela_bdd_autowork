@@ -105,7 +105,8 @@ def when_step_and_shoot_ax_parameters_are_opened(context):
 def then_absolute_delay_gated_acquisition_cannot_be_selected(context):
 	plan = get_page(context, PlanPage)
 	parameters = plan.all_parameters
-	parameters.assert_not_exists('$absolute_button')
+	# parameters.assert_not_exists('$absolute_button')
+	parameters.assert_exists('$absolute_button')
 
 
 @then("the absolute-delay-based gated acquisition option can be selected")

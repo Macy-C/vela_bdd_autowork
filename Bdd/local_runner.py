@@ -2,8 +2,8 @@ import sys
 from autowork_core.runtime.local_runner import main
 
 if __name__ == "__main__":
-    # feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features\Absolute_delay_features\Console-SRS.22778.feature'
-    feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features'
+    feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features\Absolute_delay_features\Console-SRS.22774.feature'
+    # feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features'
     # feature_path = r'Bdd\test_features\test_debug.feature'
     debug_settings_overrides = {
         # 应用启动方式
