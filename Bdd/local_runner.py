@@ -2,13 +2,20 @@ import sys
 from autowork_core.runtime.local_runner import main
 
 if __name__ == "__main__":
-    feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features\Absolute_delay_features\Console-SRS.22774.feature'
-    # feature_path = r'D:\projects\vela_bdd_autowork\Bdd\test_features'
-    # feature_path = r'Bdd\test_features\test_debug.feature'
+    feature_path = r'C:\Users\320321651\Messy\projects\bdd_autowork\Bdd\test_features\calc\calc.feature'
+    scenario_name = None
+    example_id = None
+    # 完整复跑一个普通 Scenario：
+    # scenario_name = "计算相加"
+    # 完整复跑一个 Scenario Outline 的全部 Examples：
+    # scenario_name = "计算 <a> 加 <b>"
+    # 完整复跑一个 Scenario Outline 的单个 Example：
+    # scenario_name = "计算 <a> 加 <b>"
+    # example_id = "1.1"
     debug_settings_overrides = {
         # 应用启动方式
-        "app_launch_mode": "auto",  # auto / attach
-        "app_path" : r"C:\pms\Bin\Logon.Philips_Service.cmd",
+        "app_launch_mode": "attach",  # auto / attach
+        "app_path" : '', 
         "backend" : "uia",
         "app_process_track_mode": "snapshot",  # snapshot / root / none
 
@@ -16,7 +23,7 @@ if __name__ == "__main__":
         "log_level": "DEBUG",  # DEBUG / INFO / WARNING / ERROR
         "draw_outline": True,  # 找到元素后画蓝框
         "record_mode": "failed",  # off / failed / all
-        "record_buffer_seconds": 8.0 ,
+        "record_buffer_seconds": 10.0 ,
 
         # OCR 调试
         "ocr_warmup": True,  # 调试时可关，启动更快
@@ -41,4 +48,6 @@ if __name__ == "__main__":
         settings_overrides=debug_settings_overrides,
         verbose=True,
         formatter="progress2",  # progress2 / pretty
+        scenario_name=scenario_name,
+        example_id=example_id,
     ))

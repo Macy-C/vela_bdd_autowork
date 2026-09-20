@@ -39,9 +39,9 @@ def merge_final_report():
         final_report_json=DEFAULT_FINAL_REPORT_JSON,
         allow_add=False,
         # 目标不唯一时再填写：
-        feature_file=r"Bdd\test_features\Absolute_delay_features\Console-SRS.22774.feature",
-        scenario_name="Log Viewer shows configured phase parameters for the Gantry scan request in absolute mode",
-        example_id="1.2",
+        # feature_file=r"Bdd\test_features\calc\calc.feature",
+        # scenario_name="计算相加",
+        # example_id="1.1",
     )
 
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         raise SystemExit(main())
 
-    # raise SystemExit(_print_result(create_final_report()))
-    raise SystemExit(_print_result(merge_final_report()))
+    raise SystemExit(_print_result(create_final_report()))
+    # raise SystemExit(_print_result(merge_final_report()))
     # raise SystemExit(_print_result(delete_from_final_report()))
     # raise SystemExit(_print_result(render_final_report()))
