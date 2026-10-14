@@ -1,8 +1,17 @@
+from dataclasses import dataclass
+
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
 from pywinauto import Desktop
 from pywinauto.findwindows import find_elements
+
+from autowork_core.common.element_locator_properties import (
+    get_locator_property_source,
+    iter_locator_properties,
+    normalize_locator_property_key,
+)
+from autowork_core.common.uia_tree import iter_descendants_via_children
 
 
 COMMON_INSPECT_PROPERTIES = [
@@ -43,6 +52,13 @@ COMMON_INSPECT_PROPERTIES = [
     "wrapper.is_visible",
     "wrapper.is_enabled",
 ]
+
+
+@dataclass(frozen=True)
+class DebugElementSnapshot:
+    key: str
+    rect: object | None
+    values: dict[str, str]
 
 
 MSAA_ROLE_NAMES = {
@@ -147,10 +163,15 @@ def get_element_rect(element):
 
 def safe_get_element_rect(element):
     element = try_to_wrapper(element)
+    info = _element_info(element)
+    return _safe_rect_from_element_info(element, info)
+
+
+def _safe_rect_from_element_info(element, info):
     for getter in (
         lambda: element.rectangle(),
         lambda: getattr(element, "rectangle", None),
-        lambda: getattr(_element_info(element), "rectangle", None),
+        lambda: getattr(info, "rectangle", None),
     ):
         try:
             rect = getter()
@@ -171,6 +192,10 @@ def _element_info(element):
 
 def _safe_info_attr(element, name, default=""):
     info = _element_info(element)
+    return _safe_info_attr_value(info, name, default)
+
+
+def _safe_info_attr_value(info, name, default=""):
     try:
         value = getattr(info, name, default)
         return default if value is None else value
@@ -227,11 +252,27 @@ def _add_legacy_properties(props, element, info):
         legacy_props = {}
 
     for key, value in legacy_props.items():
-        if value is not None:
-            key_text = str(key)
-            props[f"LegacyIAccessible.{key_text}"] = safe_to_string(
-                _format_legacy_property(key_text, value)
-            )
+        if not _has_property_value(value):
+            continue
+        key_text = str(key)
+        locator_key = normalize_locator_property_key(
+            f"legacyiaccessible.{key_text.lower()}"
+        )
+        locator_source = get_locator_property_source(locator_key)
+        if locator_source:
+            props.setdefault(locator_key, {
+                "value": safe_to_string(_format_legacy_property(key_text, value)),
+                "source": locator_source,
+            })
+            continue
+        props[f"debug.LegacyIAccessible.{key_text}"] = {
+            "value": safe_to_string(_format_legacy_property(key_text, value)),
+            "source": f"LegacyIAccessible.{key_text}",
+        }
+
+
+def _has_property_value(value):
+    return value is not None and value != ""
 
 
 def _rect_text(rect):
@@ -319,8 +360,15 @@ def iter_ordered_properties(props):
 
 def make_element_key(element):
     info = _element_info(element)
+    key = _stable_element_key(info)
+    if key is not None:
+        return key
     rect = safe_get_element_rect(element)
 
+    return _element_key_from_info_rect(info, rect)
+
+
+def _stable_element_key(info):
     handle = getattr(info, "handle", None)
     if handle:
         return f"handle:{handle}"
@@ -328,12 +376,36 @@ def make_element_key(element):
     runtime_id = getattr(info, "runtime_id", None)
     if runtime_id:
         return f"runtime:{runtime_id}"
+    return None
+
+
+def _element_key_from_info_rect(info, rect):
+    key = _stable_element_key(info)
+    if key is not None:
+        return key
 
     return (
         f"{getattr(info, 'control_type', '')}|"
         f"{getattr(info, 'name', '')}|"
         f"{getattr(info, 'automation_id', '')}|"
         f"{_rect_text(rect)}"
+    )
+
+
+def read_element_snapshot(element):
+    element = try_to_wrapper(element)
+    info = _element_info(element)
+    rect = _safe_rect_from_element_info(element, info)
+    return DebugElementSnapshot(
+        key=_element_key_from_info_rect(info, rect),
+        rect=rect,
+        values={
+            "control_type": _safe_info_attr_value(info, "control_type"),
+            "name": _safe_info_attr_value(info, "name"),
+            "auto_id": _safe_info_attr_value(info, "automation_id"),
+            "class_name": _safe_info_attr_value(info, "class_name"),
+            "rect": _rect_text(rect),
+        },
     )
 
 
@@ -358,15 +430,7 @@ def make_xpath_suggestion(element):
 
 
 def get_tree_values(element):
-    rect = safe_get_element_rect(element)
-
-    return {
-        "control_type": _safe_info_attr(element, "control_type"),
-        "name": _safe_info_attr(element, "name"),
-        "auto_id": _safe_info_attr(element, "automation_id"),
-        "class_name": _safe_info_attr(element, "class_name"),
-        "rect": _rect_text(rect),
-    }
+    return dict(read_element_snapshot(element).values)
 
 
 def iter_tree_children(element):
@@ -378,18 +442,17 @@ def iter_tree_children(element):
 
 def iter_runtime_descendants(element):
     element = try_to_wrapper(element)
-    try:
-        descendants = element.descendants()
-    except Exception:
-        descendants = []
 
     seen = set()
-    for candidate in descendants or []:
-        key = make_element_key(candidate)
-        if key in seen:
-            continue
-        seen.add(key)
-        yield candidate
+    try:
+        for candidate in iter_descendants_via_children(element):
+            key = make_element_key(candidate)
+            if key in seen:
+                continue
+            seen.add(key)
+            yield candidate
+    except Exception:
+        return
 
 
 def safe_parent(element):
@@ -412,19 +475,16 @@ def safe_parent(element):
 
 def _direct_children(element):
     seen = set()
-    for source in (element, getattr(element, "element_info", None)):
-        if source is None:
+    try:
+        children = element.children()
+    except Exception:
+        children = []
+    for child in children or []:
+        key = _safe_element_key(child)
+        if key in seen:
             continue
-        try:
-            children = source.children()
-        except Exception:
-            children = []
-        for child in children or []:
-            key = _safe_element_key(child)
-            if key in seen:
-                continue
-            seen.add(key)
-            yield child
+        seen.add(key)
+        yield child
 
 
 def _safe_element_key(element):
@@ -445,6 +505,14 @@ def get_all_element_properties(element, excluded_wrapper_methods=()):
 
     try:
         info = element.element_info
+        locator_sources = set()
+
+        for key, value, source in iter_locator_properties(element):
+            locator_sources.add(source)
+            props[key] = {
+                "value": safe_to_string(value),
+                "source": source,
+            }
 
         for attr in dir(info):
             if attr.startswith("_"):
@@ -465,23 +533,39 @@ def get_all_element_properties(element, excluded_wrapper_methods=()):
             except Exception:
                 continue
 
-            if callable(value):
+            if callable(value) or not _has_property_value(value):
                 continue
 
-            props[f"element_info.{attr}"] = safe_to_string(value)
+            source = f"element_info.{attr}"
+            if source in locator_sources:
+                continue
+
+            props[f"debug.element_info.{attr}"] = {
+                "value": safe_to_string(value),
+                "source": source,
+            }
 
     except Exception as e:
-        props["element_info.error"] = safe_to_string(e)
+        props["debug.element_info.error"] = {
+            "value": safe_to_string(e),
+            "source": "element_info.error",
+        }
 
     _add_legacy_properties(props, element, info)
 
     value_value = _safe_value_value(element)
-    if value_value is not None:
-        props["Value.Value"] = safe_to_string(value_value)
+    if _has_property_value(value_value) and "value.value" not in props:
+        props["value.value"] = {
+            "value": safe_to_string(value_value),
+            "source": "Value.Value",
+        }
 
     value_is_readonly = _safe_value_is_readonly(element)
-    if value_is_readonly is not None:
-        props["Value.IsReadOnly"] = safe_to_string(value_is_readonly)
+    if _has_property_value(value_is_readonly) and "value.isreadonly" not in props:
+        props["value.isreadonly"] = {
+            "value": safe_to_string(value_is_readonly),
+            "source": "Value.IsReadOnly",
+        }
 
     control_type = str(getattr(info, "control_type", "") or "")
     semantic_methods = {
@@ -507,7 +591,13 @@ def get_all_element_properties(element, excluded_wrapper_methods=()):
         try:
             method = getattr(element, method_name, None)
             if callable(method):
-                props[property_name] = safe_to_string(method())
+                value = method()
+                if not _has_property_value(value):
+                    continue
+                props[f"debug.{property_name}"] = {
+                    "value": safe_to_string(value),
+                    "source": property_name,
+                }
         except Exception:
             pass
 
@@ -538,10 +628,23 @@ def get_all_element_properties(element, excluded_wrapper_methods=()):
             else:
                 value = method
 
-            props[f"wrapper.{method_name}"] = safe_to_string(value)
+            if not _has_property_value(value):
+                continue
+
+            source = f"wrapper.{method_name}"
+            if source in locator_sources:
+                continue
+
+            props[f"debug.wrapper.{method_name}"] = {
+                "value": safe_to_string(value),
+                "source": source,
+            }
 
         except Exception as e:
-            props[f"wrapper.{method_name}"] = f"<error: {safe_to_string(e)}>"
+            props[f"debug.wrapper.{method_name}"] = {
+                "value": f"<error: {safe_to_string(e)}>",
+                "source": f"wrapper.{method_name}",
+            }
 
     return props
 
